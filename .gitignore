@@ -15,3 +15,10 @@ x64/
 *.exe
 *.lib
 *.dll
+/doc/Architecture.md
+/doc/Bug_Fixes_Report.md
+/doc/Compilation_Fixes.md
+/doc/Implementation_Summary.md
+/doc/Main_Program_Guide.md
+/doc/User_Guide_CN.md
+/doc/VS_Project_Configuration.md
