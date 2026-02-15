@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="EMELinkBudget/EMELinkBudget.vcxproj" />
+  <Project Path="EMELinkBudget/EMELinkBudget.vcxproj" Id="9c0a8f92-14d0-4d08-b815-da76990aa6bd" />
 </Solution>

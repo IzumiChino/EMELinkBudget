@@ -13,5 +13,175 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="源文件\Core">
+      <UniqueIdentifier>{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Modules">
+      <UniqueIdentifier>{E12C6687-8B4A-11D0-8D11-00A0C91BC942}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\DataProviders">
+      <UniqueIdentifier>{F12C6687-8B4A-11D0-8D11-00A0C91BC942}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Tests">
+      <UniqueIdentifier>{A12C6687-8B4A-11D0-8D11-00A0C91BC942}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Core">
+      <UniqueIdentifier>{B12C6687-8B4A-11D0-8D11-00A0C91BC942}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Modules">
+      <UniqueIdentifier>{C12C6687-8B4A-11D0-8D11-00A0C91BC942}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\DataProviders">
+      <UniqueIdentifier>{D12C6687-8B4A-11D0-8D11-00A0C91BC942}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Core System -->
+    <ClCompile Include="src\EMELinkBudget.cpp">
+      <Filter>源文件\Core</Filter>
+    </ClCompile>
+
+    <!-- Main Programs - Choose ONE -->
+    <ClCompile Include="src\main_linkbudget.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main_linkbudget_interactive.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+
+    <!-- Modules -->
+    <ClCompile Include="src\GeometryCalculator.cpp">
+      <Filter>源文件\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PathLossCalculator.cpp">
+      <Filter>源文件\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PolarizationModule.cpp">
+      <Filter>源文件\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NoiseCalculator.cpp">
+      <Filter>源文件\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SNRCalculator.cpp">
+      <Filter>源文件\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FaradayRotation.cpp">
+      <Filter>源文件\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IonospherePhysics.cpp">
+      <Filter>源文件\Modules</Filter>
+    </ClCompile>
+
+    <!-- Data Providers -->
+    <ClCompile Include="src\IonexReader.cpp">
+      <Filter>源文件\DataProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IonosphereDataProvider.cpp">
+      <Filter>源文件\DataProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MoonCalendarReader.cpp">
+      <Filter>源文件\DataProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NOAAGlotecReader.cpp">
+      <Filter>源文件\DataProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SimpleHttpClient.cpp">
+      <Filter>源文件\DataProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WMMModel.cpp">
+      <Filter>源文件\DataProviders</Filter>
+    </ClCompile>
+
+    <!-- Old Main Programs (Excluded) -->
+    <ClCompile Include="src\main.cpp">
+      <Filter>源文件\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main_interactive.cpp">
+      <Filter>源文件\Tests</Filter>
+    </ClCompile>
+
+    <!-- Test Programs (Excluded) -->
+    <ClCompile Include="src\test_calendar.cpp">
+      <Filter>源文件\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\test_glotec.cpp">
+      <Filter>源文件\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\test_grid.cpp">
+      <Filter>源文件\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\test_ionex.cpp">
+      <Filter>源文件\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\test_ionosphere_physics.cpp">
+      <Filter>源文件\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\test_user_case.cpp">
+      <Filter>源文件\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\test_wmm.cpp">
+      <Filter>源文件\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\test_linkbudget_quick.cpp">
+      <Filter>源文件\Tests</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Core Headers -->
+    <ClInclude Include="src\EMELinkBudget.h">
+      <Filter>头文件\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LinkBudgetTypes.h">
+      <Filter>头文件\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Parameters.h">
+      <Filter>头文件\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MaidenheadGrid.h">
+      <Filter>头文件\Core</Filter>
+    </ClInclude>
+
+    <!-- Module Headers -->
+    <ClInclude Include="src\GeometryCalculator.h">
+      <Filter>头文件\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PathLossCalculator.h">
+      <Filter>头文件\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PolarizationModule.h">
+      <Filter>头文件\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NoiseCalculator.h">
+      <Filter>头文件\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SNRCalculator.h">
+      <Filter>头文件\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FaradayRotation.h">
+      <Filter>头文件\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IonospherePhysics.h">
+      <Filter>头文件\Modules</Filter>
+    </ClInclude>
+
+    <!-- Data Provider Headers -->
+    <ClInclude Include="src\IonexReader.h">
+      <Filter>头文件\DataProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IonosphereDataProvider.h">
+      <Filter>头文件\DataProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MoonCalendarReader.h">
+      <Filter>头文件\DataProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NOAAGlotecReader.h">
+      <Filter>头文件\DataProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SimpleHttpClient.h">
+      <Filter>头文件\DataProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="src\WMMModel.h">
+      <Filter>头文件\DataProviders</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

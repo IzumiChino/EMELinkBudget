@@ -15,6 +15,7 @@ x64/
 *.exe
 *.lib
 *.dll
+*.obj
 /doc/Architecture.md
 /doc/Bug_Fixes_Report.md
 /doc/Compilation_Fixes.md
