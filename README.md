@@ -1,6 +1,6 @@
 # EME Link Budget Calculator
 
-完整的EME（月面反射通信）链路预算计算系统，实现了从发射到接收的完整信号链路和噪声分析。
+完整的EME（月面反射通信）链路预算计算系统，实现了从发射到接收的完整信号链路和噪声分析
 
 ## 系统特性
 
@@ -59,7 +59,6 @@ EMELinkBudget/
 │   ├── calendar.dat                 # 月球星历数据
 │   └── WMMHR.COF                    # 世界磁场模型
 └── doc/
-    └── Architecture.md              # 系统架构文档
 ```
 
 ## 使用示例
@@ -89,8 +88,8 @@ Select polarization [1.0]: 1
 
 // ... 继续输入其他参数 ...
 
-✅ Link Status: VIABLE - QSO possible!
-🎯 LINK MARGIN: 7.5 dB
+ Link Status: VIABLE - QSO possible!
+ LINK MARGIN: 7.5 dB
 ```
 
 ### 编程模式（API）
@@ -182,20 +181,6 @@ T_ant_eff = T_ant/L + T_phy·(1-1/L)
 PLF = |⟨J_RX | R(Φ_down)·M_moon·R(Φ up)·J_TX⟩|²
 ```
 
-## 典型参数
-
-### 144 MHz EME
-- 发射功率: 100W (50 dBm)
-- 天线增益: 20 dBi (4x17 Yagi)
-- 接收机NF: 0.5 dB
-- 带宽: 2500 Hz (WSJT-X)
-- 所需SNR: -21 dB
-
-### 预期性能
-- 路径损耗: ~250 dB
-- 系统噪声: ~150 K
-- 典型余量: 5-10 dB
-
 ## 数据源
 
 ### 实时数据支持（规划中）
@@ -223,9 +208,7 @@ PLF = |⟨J_RX | R(Φ_down)·M_moon·R(Φ up)·J_TX⟩|²
    - 预配置的示例
    - 适合快速测试和学习
 
-切换方法：编辑 `EMELinkBudget.vcxproj`，设置对应文件的 `<ExcludedFromBuild>` 标签。
-
-详见：[主程序切换指南](doc/Main_Program_Guide.md)
+切换方法：编辑 `EMELinkBudget.vcxproj`，设置对应文件的 `<ExcludedFromBuild>` 标签
 
 ### 编译步骤
 
@@ -242,8 +225,7 @@ cl /EHsc /std:c++17 /I"src" src/*.cpp
 ## 验证
 
 系统已通过以下验证：
-- 与WSJT-X内置计算器对比
-- 与VK3UM EME Calculator对比
+
 - 实际EME QSO数据验证
 
 ## 扩展计划
@@ -273,10 +255,10 @@ cl /EHsc /std:c++17 /I"src" src/*.cpp
 
 ## 许可证
 
-MIT License - 详见 LICENSE 文件
+MIT License
 
 ## 作者
 
-Izumi Chino - 2026
+Izumi Chino@BI6DX
 
-基于原有的Faraday Rotation模块扩展而成。
+基于原有的Faraday Rotation模块扩展而成
