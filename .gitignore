@@ -1,0 +1,17 @@
+.vs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+*.user
+*.aps
+*.intermediate.manifest
+*.sys
+*.inf
+*.cer
+*.pdb
+*.log
+*.wrn
+*.lastcodeanalysistier
+*.exe
+*.lib
+*.dll
