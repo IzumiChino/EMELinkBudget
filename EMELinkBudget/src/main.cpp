@@ -78,11 +78,8 @@ int main() {
     printHeader("EME Faraday Rotation Polarization Loss Calculator V2");
     std::cout << "Faraday Rotation Polarization Loss Calculator V2 for EME\n" << std::endl;
 
-    // ========== Example 1: Using Maidenhead Grid ==========
-
     printHeader("Example 1: Using Maidenhead Grid Locator");
 
-    // System configuration
     SystemConfiguration config;
     config.frequency_MHz = 144.0;
     config.includeFaradayRotation = true;
@@ -93,10 +90,8 @@ int main() {
               << ParameterUtils::getFrequencyBand(config.frequency_MHz) << " band)" << std::endl;
     std::cout << std::endl;
 
-    // Create calculator
     FaradayRotation calculator(config);
 
-    // Set DX station (using Grid)
     std::string dx_grid = "FN20xa";
     calculator.setDXStationByGrid(
         dx_grid,
@@ -104,7 +99,6 @@ int main() {
         ParameterUtils::deg2rad(0.0)
     );
 
-    // Set Home station (using Grid)
     std::string home_grid = "PM95vr";
     calculator.setHomeStationByGrid(
         home_grid,
@@ -112,18 +106,15 @@ int main() {
         ParameterUtils::deg2rad(0.0)
     );
 
-    // Print station info
     printSiteInfo("DX", calculator.getDXStation());
     std::cout << std::endl;
     printSiteInfo("Home", calculator.getHomeStation());
     std::cout << std::endl;
 
-    // Calculate distance
     double distance = calculator.calculateStationDistance();
     std::cout << "Ground Distance: " << std::fixed << std::setprecision(1)
               << distance << " km" << std::endl;
 
-    // Set ionosphere data
     IonosphereData iono;
     iono.vTEC_DX = 25.0;
     iono.vTEC_Home = 30.0;
@@ -140,7 +131,6 @@ int main() {
     std::cout << "  DX B field: " << iono.B_magnitude_DX * 1e6 << " uT" << std::endl;
     std::cout << "  Home B field: " << iono.B_magnitude_Home * 1e6 << " uT" << std::endl;
 
-    // Set moon ephemeris
     MoonEphemeris moon;
     moon.declination = ParameterUtils::deg2rad(15.0);
     moon.hourAngle_DX = ParameterUtils::deg2rad(30.0);
@@ -155,13 +145,9 @@ int main() {
     std::cout << "  Home Hour Angle: " << ParameterUtils::rad2deg(moon.hourAngle_Home) << " deg" << std::endl;
     std::cout << "  Distance: " << moon.distance_km << " km" << std::endl;
 
-    // Calculate
     CalculationResults results = calculator.calculate();
 
-    // Display results
     printResults(results);
-
-    // ========== Example 2: Frequency Sweep ==========
 
     std::cout << "\n\n";
     printHeader("Example 2: Frequency Sweep Analysis");
@@ -198,8 +184,6 @@ int main() {
                       << std::endl;
         }
     }
-
-    // ========== Example 3: Polarization Type Comparison ==========
 
     std::cout << "\n\n";
     printHeader("Example 3: Polarization Type Comparison");

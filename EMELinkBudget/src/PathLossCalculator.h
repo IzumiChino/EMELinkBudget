@@ -8,7 +8,6 @@ class PathLossCalculator {
 public:
     PathLossCalculator();
 
-    // Calculate all path losses
     PathLossResults calculate(
         double frequency_MHz,
         double distance_TX_km,
@@ -17,7 +16,6 @@ public:
         double elevation_RX_deg,
         bool includeAtmospheric = true);
 
-    // Individual loss calculations
     double calculateFreeSpaceLoss(
         double frequency_MHz,
         double distance_km);
@@ -42,15 +40,12 @@ class AtmosphericModel {
 public:
     AtmosphericModel();
 
-    // Calculate zenith attenuation for given frequency
     double getZenithAttenuation(double frequency_MHz);
 
-    // Calculate slant path attenuation
     double getSlantAttenuation(
         double frequency_MHz,
         double elevation_deg);
 
 private:
-    // Frequency-dependent attenuation model
     double calculateGaseousAttenuation(double frequency_MHz);
 };

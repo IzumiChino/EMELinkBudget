@@ -251,7 +251,6 @@ int main() {
     }
     calculator.setIonosphereData(iono);
 
-    // ========== Input: Moon Ephemeris ==========
     std::cout << "\n--- Moon Ephemeris ---" << std::endl;
     std::cout << "Do you have moon elevation/azimuth data? (y/n): ";
     char have_elev;
@@ -324,7 +323,6 @@ int main() {
 
         moon.declination = ParameterUtils::deg2rad(moon_dec);
 
-        // Calculate hour angle from elevation (approximate)
         double sinLat_DX = std::sin(calculator.getDXStation().latitude);
         double cosLat_DX = std::cos(calculator.getDXStation().latitude);
         double sinDec = std::sin(moon.declination);
@@ -411,17 +409,14 @@ int main() {
     moon.distance_km = moon_distance;
     calculator.setMoonEphemeris(moon);
 
-    // ========== Calculate ==========
     std::cout << "\nCalculating..." << std::endl;
     CalculationResults results = calculator.calculate();
 
-    // Debug: Show calculated elevations
     const MoonEphemeris& moon_data = calculator.getMoonEphemeris();
     std::cout << "\nDebug - Calculated Moon Elevations:" << std::endl;
     std::cout << "  DX Elevation: " << ParameterUtils::rad2deg(moon_data.elevation_DX) << " deg" << std::endl;
     std::cout << "  Home Elevation: " << ParameterUtils::rad2deg(moon_data.elevation_Home) << " deg" << std::endl;
 
-    // ========== Display Results ==========
     printHeader("Calculation Results");
 
     if (!results.calculationSuccess) {
@@ -467,7 +462,6 @@ int main() {
     std::cout << "Efficiency: " << std::setprecision(2)
               << results.polarizationEfficiency << " %" << std::endl;
 
-    // ========== Interpretation ==========
     std::cout << "\n--- Interpretation ---" << std::endl;
     if (results.polarizationLoss_dB > -1.0) {
         std::cout << "Excellent: Minimal polarization loss." << std::endl;
@@ -481,7 +475,6 @@ int main() {
 
     printSeparator();
 
-    // ========== Save to file option ==========
     std::cout << "\nSave results to file? (y/n): ";
     char save_file;
     std::cin >> save_file;

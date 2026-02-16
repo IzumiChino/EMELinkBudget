@@ -18,22 +18,18 @@ void EMELinkBudget::setParameters(const LinkBudgetParameters& params) {
 bool EMELinkBudget::validateParameters(std::string& errorMsg) const {
     std::ostringstream oss;
 
-    // Validate frequency
     if (m_params.frequency_MHz <= 0) {
         oss << "Invalid frequency: " << m_params.frequency_MHz << " MHz. ";
     }
 
-    // Validate bandwidth
     if (m_params.bandwidth_Hz <= 0) {
         oss << "Invalid bandwidth: " << m_params.bandwidth_Hz << " Hz. ";
     }
 
-    // Validate TX power
     if (m_params.txPower_dBm < -50.0 || m_params.txPower_dBm > 100.0) {
         oss << "TX power out of reasonable range: " << m_params.txPower_dBm << " dBm. ";
     }
 
-    // Validate gains
     if (m_params.txGain_dBi < 0.0 || m_params.txGain_dBi > 50.0) {
         oss << "TX gain out of reasonable range: " << m_params.txGain_dBi << " dBi. ";
     }
@@ -41,7 +37,6 @@ bool EMELinkBudget::validateParameters(std::string& errorMsg) const {
         oss << "RX gain out of reasonable range: " << m_params.rxGain_dBi << " dBi. ";
     }
 
-    // Validate noise figure
     if (m_params.rxNoiseFigure_dB < 0.0 || m_params.rxNoiseFigure_dB > 10.0) {
         oss << "RX noise figure out of reasonable range: " << m_params.rxNoiseFigure_dB << " dB. ";
     }
@@ -91,7 +86,6 @@ SNRResults EMELinkBudget::calculateSNR(
     const PolarizationResults& polarization,
     const NoiseResults& noise) {
 
-    // Calculate fading margin
     FadingMargin fadingAnalyzer;
     double fadingMargin = fadingAnalyzer.calculateMargin(
         m_params.frequency_MHz,
@@ -106,7 +100,7 @@ SNRResults EMELinkBudget::calculateSNR(
         pathLoss,
         polarization,
         noise,
-        -21.0,  // Required SNR for WSJT-X modes (typical)
+        -30.2,
         fadingMargin);
 }
 
@@ -115,7 +109,6 @@ LinkBudgetResults EMELinkBudget::calculate() {
     m_lastResults.calculationTime = std::time(nullptr);
 
     try {
-        // Validate parameters
         std::string errorMsg;
         if (!validateParameters(errorMsg)) {
             m_lastResults.calculationSuccess = false;
@@ -123,30 +116,23 @@ LinkBudgetResults EMELinkBudget::calculate() {
             return m_lastResults;
         }
 
-        // Step 1: Calculate geometry and moon position
         m_lastResults.geometry = calculateGeometry();
 
-        // Step 2: Calculate path losses
         m_lastResults.pathLoss = calculatePathLoss(m_lastResults.geometry);
 
-        // Step 3: Calculate polarization loss
         m_lastResults.polarization = calculatePolarization(m_lastResults.geometry);
 
-        // Step 4: Calculate noise
         m_lastResults.noise = calculateNoise(m_lastResults.geometry);
 
-        // Step 5: Calculate SNR and link margin
         m_lastResults.snr = calculateSNR(
             m_lastResults.pathLoss,
             m_lastResults.polarization,
             m_lastResults.noise);
 
-        // Calculate total loss
         m_lastResults.totalLoss_dB =
             m_lastResults.pathLoss.totalPathLoss_dB +
             m_lastResults.polarization.polarizationLoss_dB;
 
-        // Mark calculation as successful
         m_lastResults.calculationSuccess = true;
 
     } catch (const std::exception& e) {

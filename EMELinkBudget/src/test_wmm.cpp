@@ -1,6 +1,8 @@
 #include "WMMModel.h"
 #include <iostream>
 #include <iomanip>
+#include <vector>
+#include <string>
 
 int main() {
     std::cout << "WMM Model Test Program\n";
@@ -8,13 +10,36 @@ int main() {
 
     WMMModel wmm;
 
-    if (!wmm.loadCoefficientFile("../data/WMMHR.COF")) {
+    std::vector<std::string> possiblePaths = {
+        "data/WMMHR.COF",
+        "../data/WMMHR.COF",
+        "../../data/WMMHR.COF",
+        "../../../data/WMMHR.COF",
+        "WMMHR.COF"
+    };
+
+    bool loaded = false;
+    std::string usedPath;
+
+    for (const auto& path : possiblePaths) {
+        if (wmm.loadCoefficientFile(path)) {
+            loaded = true;
+            usedPath = path;
+            break;
+        }
+    }
+
+    if (!loaded) {
         std::cerr << "Error: Could not load WMMHR.COF\n";
-        std::cerr << "Please ensure the file exists in the current directory.\n";
+        std::cerr << "Tried the following paths:\n";
+        for (const auto& path : possiblePaths) {
+            std::cerr << "  - " << path << "\n";
+        }
+        std::cerr << "\nPlease ensure WMMHR.COF exists in one of these locations.\n";
         return 1;
     }
 
-    std::cout << "WMM coefficient file loaded successfully!\n\n";
+    std::cout << "WMM coefficient file loaded successfully from: " << usedPath << "\n\n";
 
     struct TestLocation {
         std::string name;

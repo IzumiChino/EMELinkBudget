@@ -395,7 +395,6 @@ CalculationResults FaradayRotation::calculate() {
         double Phi_up = nu_DX + faradayRotation_DX;
         double Phi_down = nu_Home + faradayRotation_Home;
 
-        // Debug output for polarization analysis
         std::cout << "\n[DEBUG] Polarization Calculation Details:\n";
         std::cout << "  TX psi: " << rad2deg(m_dxSite.psi) << " deg, chi: " << rad2deg(m_dxSite.chi) << " deg\n";
         std::cout << "  RX psi: " << rad2deg(m_homeSite.psi) << " deg, chi: " << rad2deg(m_homeSite.chi) << " deg\n";
@@ -415,11 +414,6 @@ CalculationResults FaradayRotation::calculate() {
         JonesVector E2 = matrixVectorMultiply(M_moon, E1);
         JonesVector E_final = matrixVectorMultiply(R_down, E2);
 
-        // Calculate Polarization Loss Factor using Jones calculus
-        // PLF = |J_RX† · E_final|²
-        // This naturally handles all polarization types (linear, circular, elliptical)
-        // and automatically accounts for 180° symmetry in linear polarization
-        // because |a|² = |-a|²
         std::complex<double> innerProduct = vectorDotProduct(J_RX, E_final);
         double PLF = std::norm(innerProduct);
 
@@ -430,7 +424,7 @@ CalculationResults FaradayRotation::calculate() {
         std::cout << "  PLF: " << PLF << "\n\n";
 
         m_lastResults.PLF = PLF;
-        m_lastResults.polarizationLoss_dB = -10.0 * std::log10(PLF);  // Loss is positive when PLF < 1
+        m_lastResults.polarizationLoss_dB = -10.0 * std::log10(PLF);
         m_lastResults.polarizationEfficiency = PLF * 100.0;
 
         m_lastResults.pathLength_km = calculatePathLength();

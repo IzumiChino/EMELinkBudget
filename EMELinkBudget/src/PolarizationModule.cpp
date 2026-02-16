@@ -9,7 +9,6 @@ void PolarizationModule::setupCalculator(
     const LinkBudgetParameters& params,
     const GeometryResults& geometry) {
 
-    // Setup system configuration
     SystemConfiguration config;
     config.frequency_MHz = params.frequency_MHz;
     config.bandwidth_Hz = params.bandwidth_Hz;
@@ -19,18 +18,13 @@ void PolarizationModule::setupCalculator(
 
     m_faradayCalc.setConfiguration(config);
 
-    // Setup TX and RX stations
     m_faradayCalc.setDXStation(params.txSite);
     m_faradayCalc.setHomeStation(params.rxSite);
 
-    // Setup ionosphere data
     m_faradayCalc.setIonosphereData(params.ionosphereData);
 
-    // Setup moon ephemeris
-    // Update moon ephemeris with calculated geometry
     MoonEphemeris moonEphem = params.moonEphemeris;
 
-    // Always use geometry-calculated values for consistency
     moonEphem.rightAscension = ParameterUtils::deg2rad(geometry.moonRA_deg);
     moonEphem.declination = ParameterUtils::deg2rad(geometry.moonDEC_deg);
     moonEphem.distance_km = geometry.moonDistance_km;
@@ -40,7 +34,6 @@ void PolarizationModule::setupCalculator(
     moonEphem.elevation_Home = ParameterUtils::deg2rad(geometry.moonElevation_RX_deg);
     moonEphem.ephemerisSource = geometry.ephemerisSource;
 
-    // Use calculated hour angles from geometry
     moonEphem.hourAngle_DX = geometry.hourAngle_TX_rad;
     moonEphem.hourAngle_Home = geometry.hourAngle_RX_rad;
 

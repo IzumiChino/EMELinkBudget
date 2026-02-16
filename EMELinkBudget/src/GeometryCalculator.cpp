@@ -37,14 +37,11 @@ void GeometryCalculator::calculateMoonPosition(
     double cosH = std::cos(hourAngle);
     double sinH = std::sin(hourAngle);
 
-    // Calculate elevation
     elevation = std::asin(sinLat * sinDec + cosLat * cosDec * cosH);
 
-    // Calculate azimuth
     double tanDec = std::tan(moonDEC);
     azimuth = std::atan2(sinH, cosH * sinLat - tanDec * cosLat);
 
-    // Normalize azimuth to [0, 2π]
     if (azimuth < 0) {
         azimuth += 2.0 * M_PI;
     }
@@ -55,9 +52,6 @@ double GeometryCalculator::calculateDistance(
     double moonRA, double moonDEC,
     double moonDistance_km) {
 
-    // For EME, the distance variation due to station location is negligible
-    // compared to the moon distance (~384,400 km vs ~6,371 km Earth radius)
-    // We use the geocentric distance as approximation
     return moonDistance_km;
 }
 
@@ -66,33 +60,23 @@ double GeometryCalculator::calculateHourAngle(
     double moonRA,
     std::time_t observationTime) {
 
-    // Calculate Local Sidereal Time (LST)
-    // Simplified calculation - for production use, implement full GMST calculation
-
-    // Julian Date
     double JD = 2440587.5 + (observationTime / 86400.0);
 
-    // Days since J2000.0
     double T = (JD - 2451545.0) / 36525.0;
 
-    // Greenwich Mean Sidereal Time at 0h UT (degrees)
     double GMST = 280.46061837 + 360.98564736629 * (JD - 2451545.0)
                   + 0.000387933 * T * T
                   - T * T * T / 38710000.0;
 
-    // Normalize to [0, 360)
     GMST = std::fmod(GMST, 360.0);
     if (GMST < 0) GMST += 360.0;
 
-    // Local Sidereal Time
     double LST_deg = GMST + rad2deg(longitude);
     LST_deg = std::fmod(LST_deg, 360.0);
     if (LST_deg < 0) LST_deg += 360.0;
 
-    // Hour Angle = LST - RA
     double HA_deg = LST_deg - rad2deg(moonRA);
 
-    // Normalize to [-180, 180]
     while (HA_deg > 180.0) HA_deg -= 360.0;
     while (HA_deg < -180.0) HA_deg += 360.0;
 
