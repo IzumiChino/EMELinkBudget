@@ -3,6 +3,8 @@ name: MSBuild
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ "main" ]
 
@@ -12,7 +14,7 @@ env:
   BUILD_PLATFORM: x64
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -121,7 +123,7 @@ jobs:
         if-no-files-found: warn
 
     - name: Create Release Package
-      if: matrix.configuration == 'Release' && github.event_name == 'push'
+      if: matrix.configuration == 'Release' && startsWith(github.ref, 'refs/tags/')
       run: |
         $releaseDir = "EMELinkBudget-Release"
         New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
@@ -139,6 +141,7 @@ jobs:
           Copy-Item "data" $releaseDir -Recurse -ErrorAction SilentlyContinue
         }
         Copy-Item "README.md" $releaseDir -ErrorAction SilentlyContinue
+        Copy-Item "LICENSE" $releaseDir -ErrorAction SilentlyContinue
         
         $files = Get-ChildItem $releaseDir -Recurse
         if ($files.Count -gt 0) {
@@ -149,10 +152,64 @@ jobs:
         }
 
     - name: Upload Release Archive
-      if: matrix.configuration == 'Release' && github.event_name == 'push'
+      if: matrix.configuration == 'Release' && startsWith(github.ref, 'refs/tags/')
       uses: actions/upload-artifact@v4
       with:
         name: EMELinkBudget-Package-${{matrix.platform}}
         path: EMELinkBudget-${{matrix.platform}}-${{matrix.configuration}}.zip
         retention-days: 90
         if-no-files-found: warn
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Download Release Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: EMELinkBudget-Package-x64
+        path: release-files/
+    
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: EME Link Budget Calculator ${{ steps.version.outputs.VERSION }}
+        body: |
+          ## EME Link Budget Calculator Release ${{ steps.version.outputs.VERSION }}
+          
+          ### Features
+          - Complete EME link budget analysis
+          - Real-time ionosphere data support (GLOTEC)
+          - Moon position from JPL Horizons API
+          - Faraday rotation calculation
+          - Polarization loss analysis
+          
+          ### Installation
+          1. Download `EMELinkBudget-x64-Release.zip`
+          2. Extract to a folder
+          3. Ensure `data/` folder is in the same directory
+          4. Run `main_linkbudget_interactive.exe`
+          
+          ### System Requirements
+          - Windows 10/11 (x64)
+          - Internet connection (for real-time data)
+          
+          ### What's Changed
+          See commit history for details.
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.VERSION }}
+        files: |
+          release-files/*.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
