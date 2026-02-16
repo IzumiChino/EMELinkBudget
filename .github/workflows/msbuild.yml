@@ -37,6 +37,27 @@ jobs:
       with:
         arch: x64
 
+    - name: Retarget Solution to Available Toolset
+      working-directory: ${{github.workspace}}
+      run: |
+        Write-Host "Retargeting solution to use available build tools..."
+        $vcxprojPath = "EMELinkBudget\EMELinkBudget.vcxproj"
+        if (Test-Path $vcxprojPath) {
+          [xml]$proj = Get-Content $vcxprojPath
+          $ns = New-Object System.Xml.XmlNamespaceManager($proj.NameTable)
+          $ns.AddNamespace("ns", "http://schemas.microsoft.com/developer/msbuild/2003")
+          
+          $toolsetNodes = $proj.SelectNodes("//ns:PlatformToolset", $ns)
+          foreach ($node in $toolsetNodes) {
+            Write-Host "Changing PlatformToolset from $($node.InnerText) to v143"
+            $node.InnerText = "v143"
+          }
+          $proj.Save($vcxprojPath)
+          Write-Host "Solution retargeted successfully"
+        } else {
+          Write-Host "vcxproj file not found at $vcxprojPath"
+        }
+
     - name: Restore NuGet packages
       working-directory: ${{github.workspace}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
@@ -45,17 +66,40 @@ jobs:
     - name: Build Solution
       working-directory: ${{github.workspace}}
       run: |
-        msbuild /m /p:Configuration=${{matrix.configuration}} /p:Platform=${{matrix.platform}} /p:PreferredToolArchitecture=x64 ${{env.SOLUTION_FILE_PATH}}
+        msbuild /m /p:Configuration=${{matrix.configuration}} /p:Platform=${{matrix.platform}} /p:PreferredToolArchitecture=x64 /p:PlatformToolset=v143 ${{env.SOLUTION_FILE_PATH}}
+
+    - name: List Build Output
+      if: always()
+      working-directory: ${{github.workspace}}
+      run: |
+        Write-Host "Listing build output directories..."
+        if (Test-Path "${{matrix.platform}}") {
+          Get-ChildItem "${{matrix.platform}}" -Recurse | Select-Object FullName
+        }
+        if (Test-Path "x64") {
+          Get-ChildItem "x64" -Recurse | Select-Object FullName
+        }
 
     - name: Run Tests (Optional)
       if: matrix.configuration == 'Release'
       working-directory: ${{github.workspace}}
       run: |
-        if (Test-Path ".\x64\${{matrix.configuration}}\test_*.exe") {
-          Write-Host "Running tests..."
-          Get-ChildItem ".\x64\${{matrix.configuration}}\test_*.exe" | ForEach-Object {
-            Write-Host "Executing: $($_.Name)"
-            & $_.FullName
+        $testExes = @()
+        if (Test-Path "${{matrix.platform}}\${{matrix.configuration}}") {
+          $testExes = Get-ChildItem "${{matrix.platform}}\${{matrix.configuration}}\test_*.exe" -ErrorAction SilentlyContinue
+        }
+        if (Test-Path "x64\${{matrix.configuration}}") {
+          $testExes += Get-ChildItem "x64\${{matrix.configuration}}\test_*.exe" -ErrorAction SilentlyContinue
+        }
+        
+        if ($testExes.Count -gt 0) {
+          Write-Host "Running $($testExes.Count) test executable(s)..."
+          foreach ($test in $testExes) {
+            Write-Host "`nExecuting: $($test.Name)"
+            & $test.FullName
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "Test $($test.Name) failed with exit code $LASTEXITCODE" -ForegroundColor Yellow
+            }
           }
         } else {
           Write-Host "No test executables found, skipping tests."
@@ -68,21 +112,41 @@ jobs:
       with:
         name: EMELinkBudget-${{matrix.platform}}-${{matrix.configuration}}
         path: |
+          ${{matrix.platform}}/${{matrix.configuration}}/*.exe
+          ${{matrix.platform}}/${{matrix.configuration}}/*.dll
           x64/${{matrix.configuration}}/*.exe
           x64/${{matrix.configuration}}/*.dll
           data/
         retention-days: 30
+        if-no-files-found: warn
 
     - name: Create Release Package
       if: matrix.configuration == 'Release' && github.event_name == 'push'
       run: |
         $releaseDir = "EMELinkBudget-Release"
-        New-Item -ItemType Directory -Force -Path $releaseDir
-        Copy-Item "x64\${{matrix.configuration}}\*.exe" $releaseDir -ErrorAction SilentlyContinue
-        Copy-Item "x64\${{matrix.configuration}}\*.dll" $releaseDir -ErrorAction SilentlyContinue
-        Copy-Item "data" $releaseDir -Recurse -ErrorAction SilentlyContinue
+        New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+        
+        $outputDirs = @("${{matrix.platform}}\${{matrix.configuration}}", "x64\${{matrix.configuration}}")
+        foreach ($dir in $outputDirs) {
+          if (Test-Path $dir) {
+            Write-Host "Copying files from $dir"
+            Copy-Item "$dir\*.exe" $releaseDir -ErrorAction SilentlyContinue
+            Copy-Item "$dir\*.dll" $releaseDir -ErrorAction SilentlyContinue
+          }
+        }
+        
+        if (Test-Path "data") {
+          Copy-Item "data" $releaseDir -Recurse -ErrorAction SilentlyContinue
+        }
         Copy-Item "README.md" $releaseDir -ErrorAction SilentlyContinue
-        Compress-Archive -Path $releaseDir\* -DestinationPath "EMELinkBudget-${{matrix.platform}}-${{matrix.configuration}}.zip"
+        
+        $files = Get-ChildItem $releaseDir -Recurse
+        if ($files.Count -gt 0) {
+          Write-Host "Creating archive with $($files.Count) file(s)"
+          Compress-Archive -Path "$releaseDir\*" -DestinationPath "EMELinkBudget-${{matrix.platform}}-${{matrix.configuration}}.zip" -Force
+        } else {
+          Write-Host "No files found to package" -ForegroundColor Yellow
+        }
 
     - name: Upload Release Archive
       if: matrix.configuration == 'Release' && github.event_name == 'push'
@@ -91,3 +155,4 @@ jobs:
         name: EMELinkBudget-Package-${{matrix.platform}}
         path: EMELinkBudget-${{matrix.platform}}-${{matrix.configuration}}.zip
         retention-days: 90
+        if-no-files-found: warn
