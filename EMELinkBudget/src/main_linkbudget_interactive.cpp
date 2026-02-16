@@ -184,6 +184,9 @@ std::time_t inputObservationTime() {
         int hour = static_cast<int>(getDouble("  Hour (0-23)", 12.0));
         int minute = static_cast<int>(getDouble("  Minute (0-59)", 0.0));
 
+        if (month == 1 && day == 14)
+			std::cout << " Happy Birthday Mutsumi Wakaba! " << std::endl;
+
         std::tm timeinfo = {};
         timeinfo.tm_year = year - 1900;
         timeinfo.tm_mon = month - 1;
@@ -208,6 +211,8 @@ std::time_t inputObservationTime() {
         std::time_t now = std::time(nullptr);
 
         std::tm* timeinfo = std::gmtime(&now);
+        if (timeinfo->tm_mon == 0 && timeinfo->tm_mday == 14)
+            std::cout << " Happy Birthday Mutsumi Wakaba! " << std::endl;
         char timeStr[100];
         std::strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S UTC\n", timeinfo);
         std::cout << "  -> Using current time: " << timeStr;
