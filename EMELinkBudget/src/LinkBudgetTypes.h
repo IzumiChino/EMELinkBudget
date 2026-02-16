@@ -35,8 +35,8 @@ struct GeometryResults {
     double moonAzimuth_RX_deg;
     double moonElevation_RX_deg;
     double moonDistance_km;
-    double hourAngle_TX_rad;  // Added: Local Hour Angle at TX station
-    double hourAngle_RX_rad;  // Added: Local Hour Angle at RX station
+    double hourAngle_TX_rad;
+    double hourAngle_RX_rad;
     std::string ephemerisSource;
 
     GeometryResults()
@@ -72,7 +72,7 @@ struct PathLossResults {
           lunarReflectivity(0.07) {}
 };
 
-// ========== Polarization Results (from FaradayRotation) ==========
+// ========== Polarization Results ==========
 struct PolarizationResults {
     double spatialRotation_deg;
     double faradayRotation_TX_deg;
@@ -141,7 +141,7 @@ struct SNRResults {
           SNR_dB(0.0),
           fadingMargin_dB(3.0),
           effectiveSNR_dB(0.0),
-          requiredSNR_dB(-21.0),
+          requiredSNR_dB(-30.2),
           linkMargin_dB(0.0),
           linkViable(false) {}
 };
@@ -168,12 +168,10 @@ struct LinkBudgetResults {
 
 // ========== Link Budget Parameters ==========
 struct LinkBudgetParameters {
-    // Station parameters
-    SiteParameters txSite;
-    SiteParameters rxSite;
+SiteParameters txSite;
+SiteParameters rxSite;
 
-    // System configuration
-    double frequency_MHz;
+double frequency_MHz;
     double bandwidth_Hz;
     double txPower_dBm;
     double txGain_dBi;
@@ -181,23 +179,17 @@ struct LinkBudgetParameters {
     double txFeedlineLoss_dB;
     double rxFeedlineLoss_dB;
 
-    // Receiver parameters
     double rxNoiseFigure_dB;
     double physicalTemp_K;
 
-    // Observation time
     std::time_t observationTime;
 
-    // Ionosphere data
     IonosphereData ionosphereData;
 
-    // Moon ephemeris
     MoonEphemeris moonEphemeris;
 
-    // Data source configuration
     DataSourceConfig dataSources;
 
-    // Calculation options
     bool includeFaradayRotation;
     bool includeSpatialRotation;
     bool includeMoonReflection;

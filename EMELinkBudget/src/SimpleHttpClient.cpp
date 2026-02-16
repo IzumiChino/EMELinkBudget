@@ -2,14 +2,24 @@
 #include <windows.h>
 #include <winhttp.h>
 #include <sstream>
+#include <iostream>
 
 #pragma comment(lib, "winhttp.lib")
 
 bool SimpleHttpClient::fetchUrl(const std::string& url, std::string& response) {
+    int statusCode = 0;
+    std::string errorMsg;
+    return fetchUrlWithStatus(url, response, statusCode, errorMsg);
+}
+
+bool SimpleHttpClient::fetchUrlWithStatus(const std::string& url, std::string& response, int& statusCode, std::string& errorMsg) {
     response.clear();
+    statusCode = 0;
+    errorMsg.clear();
 
     size_t protocolEnd = url.find("://");
     if (protocolEnd == std::string::npos) {
+        errorMsg = "Invalid URL format (no protocol)";
         return false;
     }
 
@@ -32,6 +42,7 @@ bool SimpleHttpClient::fetchUrl(const std::string& url, std::string& response) {
     );
 
     if (!hSession) {
+        errorMsg = "WinHttpOpen failed (error: " + std::to_string(GetLastError()) + ")";
         return false;
     }
 
@@ -45,6 +56,7 @@ bool SimpleHttpClient::fetchUrl(const std::string& url, std::string& response) {
     );
 
     if (!hConnect) {
+        errorMsg = "WinHttpConnect failed (error: " + std::to_string(GetLastError()) + ")";
         WinHttpCloseHandle(hSession);
         return false;
     }
@@ -60,6 +72,7 @@ bool SimpleHttpClient::fetchUrl(const std::string& url, std::string& response) {
     );
 
     if (!hRequest) {
+        errorMsg = "WinHttpOpenRequest failed (error: " + std::to_string(GetLastError()) + ")";
         WinHttpCloseHandle(hConnect);
         WinHttpCloseHandle(hSession);
         return false;
@@ -76,6 +89,7 @@ bool SimpleHttpClient::fetchUrl(const std::string& url, std::string& response) {
     );
 
     if (!bResults) {
+        errorMsg = "WinHttpSendRequest failed (error: " + std::to_string(GetLastError()) + ")";
         WinHttpCloseHandle(hRequest);
         WinHttpCloseHandle(hConnect);
         WinHttpCloseHandle(hSession);
@@ -84,40 +98,70 @@ bool SimpleHttpClient::fetchUrl(const std::string& url, std::string& response) {
 
     bResults = WinHttpReceiveResponse(hRequest, NULL);
 
-    if (bResults) {
-        DWORD dwSize = 0;
-        DWORD dwDownloaded = 0;
-        std::ostringstream oss;
-
-        do {
-            dwSize = 0;
-            if (!WinHttpQueryDataAvailable(hRequest, &dwSize)) {
-                break;
-            }
-
-            if (dwSize == 0) {
-                break;
-            }
-
-            char* pszOutBuffer = new char[dwSize + 1];
-            ZeroMemory(pszOutBuffer, dwSize + 1);
-
-            if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer, dwSize, &dwDownloaded)) {
-                delete[] pszOutBuffer;
-                break;
-            }
-
-            oss.write(pszOutBuffer, dwDownloaded);
-            delete[] pszOutBuffer;
-
-        } while (dwSize > 0);
-
-        response = oss.str();
+    if (!bResults) {
+        errorMsg = "WinHttpReceiveResponse failed (error: " + std::to_string(GetLastError()) + ")";
+        WinHttpCloseHandle(hRequest);
+        WinHttpCloseHandle(hConnect);
+        WinHttpCloseHandle(hSession);
+        return false;
     }
+
+    DWORD dwStatusCode = 0;
+    DWORD dwSize = sizeof(dwStatusCode);
+    WinHttpQueryHeaders(hRequest,
+        WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+        WINHTTP_HEADER_NAME_BY_INDEX,
+        &dwStatusCode,
+        &dwSize,
+        WINHTTP_NO_HEADER_INDEX);
+
+    statusCode = static_cast<int>(dwStatusCode);
+
+    if (statusCode != 200) {
+        errorMsg = "HTTP status code: " + std::to_string(statusCode);
+        WinHttpCloseHandle(hRequest);
+        WinHttpCloseHandle(hConnect);
+        WinHttpCloseHandle(hSession);
+        return false;
+    }
+
+    dwSize = 0;
+    DWORD dwDownloaded = 0;
+    std::ostringstream oss;
+
+    do {
+        dwSize = 0;
+        if (!WinHttpQueryDataAvailable(hRequest, &dwSize)) {
+            break;
+        }
+
+        if (dwSize == 0) {
+            break;
+        }
+
+        char* pszOutBuffer = new char[dwSize + 1];
+        ZeroMemory(pszOutBuffer, dwSize + 1);
+
+        if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer, dwSize, &dwDownloaded)) {
+            delete[] pszOutBuffer;
+            break;
+        }
+
+        oss.write(pszOutBuffer, dwDownloaded);
+        delete[] pszOutBuffer;
+
+    } while (dwSize > 0);
+
+    response = oss.str();
 
     WinHttpCloseHandle(hRequest);
     WinHttpCloseHandle(hConnect);
     WinHttpCloseHandle(hSession);
 
-    return !response.empty();
+    if (response.empty()) {
+        errorMsg = "Empty response received";
+        return false;
+    }
+
+    return true;
 }

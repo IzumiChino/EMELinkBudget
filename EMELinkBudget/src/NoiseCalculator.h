@@ -9,7 +9,6 @@ class NoiseCalculator {
 public:
     NoiseCalculator();
 
-    // Calculate all noise components
     NoiseResults calculate(
         double frequency_MHz,
         double bandwidth_Hz,
@@ -22,7 +21,6 @@ public:
         double physicalTemp_K = 290.0,
         bool includeGroundSpillover = true);
 
-    // Individual noise calculations
     double calculateSkyNoiseTemp(
         double frequency_MHz,
         double moonRA_deg,
@@ -47,7 +45,7 @@ public:
         double bandwidth_Hz);
 
 private:
-    static constexpr double BOLTZMANN_CONSTANT = 1.38064852e-23;  // J/K
+static constexpr double BOLTZMANN_CONSTANT = 1.38064852e-23;
 };
 
 // ========== Sky Noise Model ==========
@@ -55,17 +53,14 @@ class SkyNoiseModel {
 public:
     SkyNoiseModel();
 
-    // Get sky noise temperature at given frequency and position
     double getSkyTemp(
         double frequency_MHz,
         double ra_deg,
         double dec_deg);
 
-    // Load 408 MHz sky map (optional)
     bool loadSkyMap(const std::string& mapPath);
 
 private:
-    // Simplified sky noise model
     double calculateSkyTemp_Simplified(
         double frequency_MHz,
         double galacticLatitude_deg);

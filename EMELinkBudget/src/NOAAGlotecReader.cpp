@@ -6,6 +6,7 @@
 #include <cmath>
 #include <algorithm>
 #include <regex>
+#include <iostream>
 
 NOAAGlotecReader::NOAAGlotecReader()
     : m_baseUrl("https://services.swpc.noaa.gov/products/glotec/geojson_2d_urt/") {
@@ -18,33 +19,37 @@ std::tm NOAAGlotecReader::roundToNearest5Minutes(const std::tm& time, bool round
     int lastDigit = minutes % 10;
 
     if (roundDown) {
-        if (lastDigit >= 5) {
-            rounded.tm_min = (minutes / 10) * 10 + 5;
-        } else {
-            rounded.tm_min = (minutes / 10) * 10;
-            if (rounded.tm_min < 0) {
-                rounded.tm_min = 55;
-                rounded.tm_hour -= 1;
-                if (rounded.tm_hour < 0) {
-                    rounded.tm_hour = 23;
-                    rounded.tm_mday -= 1;
-                }
+        int rounded_min = (minutes / 10) * 10 + 5;
+        if (lastDigit < 5) {
+            rounded_min -= 10;
+        }
+
+        if (rounded_min < 0) {
+            rounded_min = 55;
+            rounded.tm_hour -= 1;
+            if (rounded.tm_hour < 0) {
+                rounded.tm_hour = 23;
+                rounded.tm_mday -= 1;
             }
         }
+
+        rounded.tm_min = rounded_min;
     } else {
-        if (lastDigit <= 5) {
-            rounded.tm_min = (minutes / 10) * 10 + 5;
-        } else {
-            rounded.tm_min = ((minutes / 10) + 1) * 10 + 5;
-            if (rounded.tm_min >= 60) {
-                rounded.tm_min = 5;
-                rounded.tm_hour += 1;
-                if (rounded.tm_hour >= 24) {
-                    rounded.tm_hour = 0;
-                    rounded.tm_mday += 1;
-                }
+        int rounded_min = (minutes / 10) * 10 + 5;
+        if (lastDigit > 5) {
+            rounded_min += 10;
+        }
+
+        if (rounded_min >= 60) {
+            rounded_min = 5;
+            rounded.tm_hour += 1;
+            if (rounded.tm_hour >= 24) {
+                rounded.tm_hour = 0;
+                rounded.tm_mday += 1;
             }
         }
+
+        rounded.tm_min = rounded_min;
     }
 
     rounded.tm_sec = 0;
@@ -191,15 +196,67 @@ bool NOAAGlotecReader::getTecAtLocation(const GlotecData& data, double lat, doub
 bool NOAAGlotecReader::fetchTecData(const std::tm& requestTime, GlotecData& data) {
     std::string url = getDataUrl(requestTime);
     std::string jsonContent;
+    int statusCode = 0;
+    std::string errorMsg;
 
-    if (!SimpleHttpClient::fetchUrl(url, jsonContent)) {
+    if (!SimpleHttpClient::fetchUrlWithStatus(url, jsonContent, statusCode, errorMsg)) {
+        std::cout << "[DEBUG] First attempt failed: " << errorMsg << std::endl;
+
         std::tm roundedTime = roundToNearest5Minutes(requestTime, false);
         url = getDataUrl(roundedTime);
-        if (!SimpleHttpClient::fetchUrl(url, jsonContent)) {
+        std::cout << "[DEBUG] Trying alternate URL: " << url << std::endl;
+
+        if (!SimpleHttpClient::fetchUrlWithStatus(url, jsonContent, statusCode, errorMsg)) {
+            std::cout << "[DEBUG] Second attempt failed: " << errorMsg << std::endl;
+
+            if (statusCode == 404) {
+                std::cout << "[DEBUG] Data not available yet (404), trying recent historical data..." << std::endl;
+
+                for (int minutesBack = 10; minutesBack <= 30; minutesBack += 10) {
+                    std::tm historicalTime = requestTime;
+                    historicalTime.tm_min -= minutesBack;
+
+                    if (historicalTime.tm_min < 0) {
+                        historicalTime.tm_min += 60;
+                        historicalTime.tm_hour -= 1;
+                        if (historicalTime.tm_hour < 0) {
+                            historicalTime.tm_hour += 24;
+                            historicalTime.tm_mday -= 1;
+                        }
+                    }
+
+                    std::tm roundedHistorical = roundToNearest5Minutes(historicalTime, true);
+                    url = getDataUrl(roundedHistorical);
+
+                    std::cout << "[DEBUG] Trying " << minutesBack << " minute(s) back: " << url << std::endl;
+
+                    if (SimpleHttpClient::fetchUrlWithStatus(url, jsonContent, statusCode, errorMsg)) {
+                        std::cout << "[DEBUG] Found data from " << minutesBack << " minute(s) ago" << std::endl;
+                        data.timestamp = roundedHistorical;
+                        bool parseSuccess = parseGeoJson(jsonContent, data);
+                        if (parseSuccess) {
+                            std::cout << "[!] Using data from " << minutesBack << " minute(s) ago (NOAA data has ~10-30 min delay)" << std::endl;
+                        }
+                        return parseSuccess;
+                    }
+                }
+
+                std::cout << "[DEBUG] No data found in past 30 minutes" << std::endl;
+            }
+
             return false;
         }
     }
 
+    std::cout << "[DEBUG] HTTP 200 OK, response size: " << jsonContent.length() << " bytes" << std::endl;
+
     data.timestamp = roundToNearest5Minutes(requestTime, true);
-    return parseGeoJson(jsonContent, data);
+    bool parseSuccess = parseGeoJson(jsonContent, data);
+
+    if (!parseSuccess) {
+        std::cout << "[DEBUG] GeoJSON parsing failed" << std::endl;
+        std::cout << "[DEBUG] First 200 chars: " << jsonContent.substr(0, 200) << std::endl;
+    }
+
+    return parseSuccess;
 }

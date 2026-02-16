@@ -102,19 +102,16 @@ int main() {
     printHeader("EME Link Budget Calculator - Complete System");
     std::cout << "Comprehensive EME Link Analysis with Signal and Noise Modeling\n" << std::endl;
 
-    // ========== Setup Link Parameters ==========
-
     LinkBudgetParameters params;
 
-    // System configuration
     params.frequency_MHz = 144.0;
     params.bandwidth_Hz = 2500.0;
-    params.txPower_dBm = 50.0;  // 100W
-    params.txGain_dBi = 20.0;   // ~4x17 Yagi array
+    params.txPower_dBm = 50.0;
+    params.txGain_dBi = 20.0;
     params.rxGain_dBi = 20.0;
     params.txFeedlineLoss_dB = 0.5;
     params.rxFeedlineLoss_dB = 0.5;
-    params.rxNoiseFigure_dB = 0.5;  // Good LNA
+    params.rxNoiseFigure_dB = 0.5;
     params.physicalTemp_K = 290.0;
 
     std::cout << "System Configuration:" << std::endl;

@@ -22,8 +22,15 @@ bool WMMModel::loadCoefficientFile(const std::string& filename) {
     m_coefficients.clear();
     std::string line;
 
+    bool firstLine = true;
+
     while (std::getline(file, line)) {
         if (line.empty() || line[0] == '#') continue;
+
+        if (firstLine) {
+            firstLine = false;
+            continue;
+        }
 
         std::istringstream iss(line);
         GaussCoefficient coef;
