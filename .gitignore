@@ -23,3 +23,9 @@ x64/
 /doc/Main_Program_Guide.md
 /doc/User_Guide_CN.md
 /doc/VS_Project_Configuration.md
+/doc/JPL_Horizons_Configuration.md
+/doc/AstronomyAPI_Integration.md
+/doc/JPL_Horizons_QuickRef.md
+/doc/MoonCalendar_Integration.md
+/doc/Timezone_Bug_Fix.md
+/EMELinkBudget/compile_test_wmm.bat
