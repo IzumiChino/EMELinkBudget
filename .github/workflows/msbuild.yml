@@ -1,0 +1,93 @@
+name: MSBuild
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  SOLUTION_FILE_PATH: EMELinkBudget.slnx
+  BUILD_CONFIGURATION: Release
+  BUILD_PLATFORM: x64
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+        platform: [x64]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup Visual Studio Dev Environment
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
+    - name: Restore NuGet packages
+      working-directory: ${{github.workspace}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+      continue-on-error: true
+
+    - name: Build Solution
+      working-directory: ${{github.workspace}}
+      run: |
+        msbuild /m /p:Configuration=${{matrix.configuration}} /p:Platform=${{matrix.platform}} /p:PreferredToolArchitecture=x64 ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Run Tests (Optional)
+      if: matrix.configuration == 'Release'
+      working-directory: ${{github.workspace}}
+      run: |
+        if (Test-Path ".\x64\${{matrix.configuration}}\test_*.exe") {
+          Write-Host "Running tests..."
+          Get-ChildItem ".\x64\${{matrix.configuration}}\test_*.exe" | ForEach-Object {
+            Write-Host "Executing: $($_.Name)"
+            & $_.FullName
+          }
+        } else {
+          Write-Host "No test executables found, skipping tests."
+        }
+      continue-on-error: true
+
+    - name: Upload Build Artifacts
+      if: matrix.configuration == 'Release'
+      uses: actions/upload-artifact@v4
+      with:
+        name: EMELinkBudget-${{matrix.platform}}-${{matrix.configuration}}
+        path: |
+          x64/${{matrix.configuration}}/*.exe
+          x64/${{matrix.configuration}}/*.dll
+          data/
+        retention-days: 30
+
+    - name: Create Release Package
+      if: matrix.configuration == 'Release' && github.event_name == 'push'
+      run: |
+        $releaseDir = "EMELinkBudget-Release"
+        New-Item -ItemType Directory -Force -Path $releaseDir
+        Copy-Item "x64\${{matrix.configuration}}\*.exe" $releaseDir -ErrorAction SilentlyContinue
+        Copy-Item "x64\${{matrix.configuration}}\*.dll" $releaseDir -ErrorAction SilentlyContinue
+        Copy-Item "data" $releaseDir -Recurse -ErrorAction SilentlyContinue
+        Copy-Item "README.md" $releaseDir -ErrorAction SilentlyContinue
+        Compress-Archive -Path $releaseDir\* -DestinationPath "EMELinkBudget-${{matrix.platform}}-${{matrix.configuration}}.zip"
+
+    - name: Upload Release Archive
+      if: matrix.configuration == 'Release' && github.event_name == 'push'
+      uses: actions/upload-artifact@v4
+      with:
+        name: EMELinkBudget-Package-${{matrix.platform}}
+        path: EMELinkBudget-${{matrix.platform}}-${{matrix.configuration}}.zip
+        retention-days: 90
