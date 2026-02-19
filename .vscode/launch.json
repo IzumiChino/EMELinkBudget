@@ -1,0 +1,50 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug with LLDB",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/EMELinkBudget",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": false,
+            "console": "integratedTerminal",
+            "sourceLanguages": [
+                "cpp"
+            ],
+            "preLaunchTask": "Build Debug (Clang)",
+            "sourceMap": {}
+        },
+        {
+            "name": "Debug Test",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/test_linkbudget_quick",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": false,
+            "console": "integratedTerminal",
+            "sourceLanguages": [
+                "cpp"
+            ],
+            "preLaunchTask": "Build Test (Clang)",
+            "sourceMap": {}
+        },
+        {
+            "name": "Run with LLDB (Release)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/release/EMELinkBudget",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": false,
+            "console": "integratedTerminal",
+            "sourceLanguages": [
+                "cpp"
+            ],
+            "preLaunchTask": "Build Release (Clang)",
+            "sourceMap": {}
+        }
+    ]
+}

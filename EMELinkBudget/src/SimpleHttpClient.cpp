@@ -1,10 +1,14 @@
 #include "SimpleHttpClient.h"
-#include <windows.h>
-#include <winhttp.h>
+#include <curl/curl.h>
 #include <sstream>
 #include <iostream>
+#include <cstring>
 
-#pragma comment(lib, "winhttp.lib")
+// Callback function for writing response data
+static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
+    userp->append((char*)contents, size * nmemb);
+    return size * nmemb;
+}
 
 bool SimpleHttpClient::fetchUrl(const std::string& url, std::string& response) {
     int statusCode = 0;
@@ -17,146 +21,53 @@ bool SimpleHttpClient::fetchUrlWithStatus(const std::string& url, std::string& r
     statusCode = 0;
     errorMsg.clear();
 
-    size_t protocolEnd = url.find("://");
-    if (protocolEnd == std::string::npos) {
-        errorMsg = "Invalid URL format (no protocol)";
+    CURL* curl = curl_easy_init();
+    if (!curl) {
+        errorMsg = "curl_easy_init failed";
         return false;
     }
 
-    std::string protocol = url.substr(0, protocolEnd);
-    std::string remainder = url.substr(protocolEnd + 3);
+    // Set URL
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-    size_t hostEnd = remainder.find('/');
-    std::string host = remainder.substr(0, hostEnd);
-    std::string path = (hostEnd != std::string::npos) ? remainder.substr(hostEnd) : "/";
+    // Set user agent
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mutsumi Wakaba / 01.14");
 
-    std::wstring wHost(host.begin(), host.end());
-    std::wstring wPath(path.begin(), path.end());
+    // Set timeout
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
 
-    HINTERNET hSession = WinHttpOpen(
-        L"Mutsumi Wakaba / 01.14",
-        WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-        WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS,
-        0
-    );
+    // Follow redirects
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
-    if (!hSession) {
-        errorMsg = "WinHttpOpen failed (error: " + std::to_string(GetLastError()) + ")";
+    // Set write callback
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+    // SSL verification options
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+    // Perform the request
+    CURLcode res = curl_easy_perform(curl);
+    
+    if (res != CURLE_OK) {
+        errorMsg = "curl_easy_perform failed: ";
+        errorMsg += curl_easy_strerror(res);
+        curl_easy_cleanup(curl);
         return false;
     }
 
-    DWORD dwFlags = (protocol == "https") ? WINHTTP_FLAG_SECURE : 0;
+    // Get HTTP status code
+    long http_code = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    statusCode = static_cast<int>(http_code);
 
-    HINTERNET hConnect = WinHttpConnect(
-        hSession,
-        wHost.c_str(),
-        (protocol == "https") ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT,
-        0
-    );
-
-    if (!hConnect) {
-        errorMsg = "WinHttpConnect failed (error: " + std::to_string(GetLastError()) + ")";
-        WinHttpCloseHandle(hSession);
-        return false;
-    }
-
-    HINTERNET hRequest = WinHttpOpenRequest(
-        hConnect,
-        L"GET",
-        wPath.c_str(),
-        NULL,
-        WINHTTP_NO_REFERER,
-        WINHTTP_DEFAULT_ACCEPT_TYPES,
-        dwFlags
-    );
-
-    if (!hRequest) {
-        errorMsg = "WinHttpOpenRequest failed (error: " + std::to_string(GetLastError()) + ")";
-        WinHttpCloseHandle(hConnect);
-        WinHttpCloseHandle(hSession);
-        return false;
-    }
-
-    BOOL bResults = WinHttpSendRequest(
-        hRequest,
-        WINHTTP_NO_ADDITIONAL_HEADERS,
-        0,
-        WINHTTP_NO_REQUEST_DATA,
-        0,
-        0,
-        0
-    );
-
-    if (!bResults) {
-        errorMsg = "WinHttpSendRequest failed (error: " + std::to_string(GetLastError()) + ")";
-        WinHttpCloseHandle(hRequest);
-        WinHttpCloseHandle(hConnect);
-        WinHttpCloseHandle(hSession);
-        return false;
-    }
-
-    bResults = WinHttpReceiveResponse(hRequest, NULL);
-
-    if (!bResults) {
-        errorMsg = "WinHttpReceiveResponse failed (error: " + std::to_string(GetLastError()) + ")";
-        WinHttpCloseHandle(hRequest);
-        WinHttpCloseHandle(hConnect);
-        WinHttpCloseHandle(hSession);
-        return false;
-    }
-
-    DWORD dwStatusCode = 0;
-    DWORD dwSize = sizeof(dwStatusCode);
-    WinHttpQueryHeaders(hRequest,
-        WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-        WINHTTP_HEADER_NAME_BY_INDEX,
-        &dwStatusCode,
-        &dwSize,
-        WINHTTP_NO_HEADER_INDEX);
-
-    statusCode = static_cast<int>(dwStatusCode);
+    curl_easy_cleanup(curl);
 
     if (statusCode != 200) {
         errorMsg = "HTTP status code: " + std::to_string(statusCode);
-        WinHttpCloseHandle(hRequest);
-        WinHttpCloseHandle(hConnect);
-        WinHttpCloseHandle(hSession);
         return false;
     }
-
-    dwSize = 0;
-    DWORD dwDownloaded = 0;
-    std::ostringstream oss;
-
-    do {
-        dwSize = 0;
-        if (!WinHttpQueryDataAvailable(hRequest, &dwSize)) {
-            break;
-        }
-
-        if (dwSize == 0) {
-            break;
-        }
-
-        char* pszOutBuffer = new char[dwSize + 1];
-        ZeroMemory(pszOutBuffer, dwSize + 1);
-
-        if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer, dwSize, &dwDownloaded)) {
-            delete[] pszOutBuffer;
-            break;
-        }
-
-        oss.write(pszOutBuffer, dwDownloaded);
-        delete[] pszOutBuffer;
-
-    } while (dwSize > 0);
-
-    response = oss.str();
-
-    WinHttpCloseHandle(hRequest);
-    WinHttpCloseHandle(hConnect);
-    WinHttpCloseHandle(hSession);
 
     if (response.empty()) {
         errorMsg = "Empty response received";
