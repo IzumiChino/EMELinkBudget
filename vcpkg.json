@@ -1,0 +1,8 @@
+{
+  "name": "emelinkbudget",
+  "version": "1.0.0",
+  "description": "EME Link Budget Calculator with cross-platform support",
+  "dependencies": [
+    "curl"
+  ]
+}
