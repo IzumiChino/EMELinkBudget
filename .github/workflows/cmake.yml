@@ -1,0 +1,177 @@
+name: CMake Build (Cross-Platform)
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          # Linux (GCC)
+          - os: ubuntu-latest
+            cmake-preset: debug
+            build-type: Debug
+            artifact-name: EMELinkBudget-Linux-Debug
+
+          - os: ubuntu-latest
+            cmake-preset: release
+            build-type: Release
+            artifact-name: EMELinkBudget-Linux-Release
+
+          # macOS
+          - os: macos-latest
+            cmake-preset: release
+            build-type: Release
+            artifact-name: EMELinkBudget-macOS-Release
+
+          # Windows
+          - os: windows-latest
+            cmake-preset: release
+            build-type: Release
+            artifact-name: EMELinkBudget-Windows-Release
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcurl4-openssl-dev
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install curl
+
+    - name: Set up CMake
+      uses: lukka/get-cmake@latest
+
+    - name: Create build directory
+      run: mkdir -p build
+
+    - name: Configure CMake
+      working-directory: build
+      run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} ..
+
+    - name: Build
+      working-directory: build
+      run: cmake --build . --config ${{ matrix.build-type }} --parallel
+
+    - name: Run tests
+      if: runner.os != 'Windows'
+      working-directory: build
+      run: ctest --output-on-failure
+
+    - name: Run tests (Windows)
+      if: runner.os == 'Windows'
+      working-directory: build
+      run: ctest --output-on-failure -C ${{ matrix.build-type }}
+
+    - name: Prepare artifacts (Unix)
+      if: runner.os != 'Windows' && matrix.build-type == 'Release'
+      working-directory: build
+      run: |
+        mkdir -p release-package
+        cp build/linux/Release/EMELinkBudget* release-package/ 2>/dev/null || true
+        cp build/macos/Release/EMELinkBudget* release-package/ 2>/dev/null || true
+        cp -r ../EMELinkBudget/data release-package/ 2>/dev/null || true
+        cp ../README.md release-package/ 2>/dev/null || true
+        cp ../LICENSE release-package/ 2>/dev/null || true
+
+    - name: Prepare artifacts (Windows)
+      if: runner.os == 'Windows' && matrix.build-type == 'Release'
+      working-directory: build
+      shell: powershell
+      run: |
+        New-Item -ItemType Directory -Force -Path release-package | Out-Null
+        Get-ChildItem "build/windows/Release/" -Include "*.exe" -Recurse | ForEach-Object {
+          Copy-Item $_.FullName "release-package/" -ErrorAction SilentlyContinue
+        }
+        Copy-Item "../EMELinkBudget/data" "release-package/" -Recurse -ErrorAction SilentlyContinue
+        Copy-Item "../README.md" "release-package/" -ErrorAction SilentlyContinue
+        Copy-Item "../LICENSE" "release-package/" -ErrorAction SilentlyContinue
+
+    - name: Upload artifacts
+      if: matrix.build-type == 'Release'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact-name }}
+        path: build/release-package/
+        retention-days: 30
+        if-no-files-found: warn
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: all-artifacts/
+
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Create release notes
+      id: release-notes
+      run: |
+        echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+        echo "## EME Link Budget Calculator ${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
+        echo "" >> $GITHUB_ENV
+        echo "### Features" >> $GITHUB_ENV
+        echo "- ✅ Cross-platform support (Linux, macOS, Windows)" >> $GITHUB_ENV
+        echo "- Complete EME link budget analysis" >> $GITHUB_ENV
+        echo "- Real-time ionosphere data support (GLOTEC)" >> $GITHUB_ENV
+        echo "- Moon position from JPL Horizons API" >> $GITHUB_ENV
+        echo "- Faraday rotation calculation" >> $GITHUB_ENV
+        echo "- Polarization loss analysis" >> $GITHUB_ENV
+        echo "" >> $GITHUB_ENV
+        echo "### Installation" >> $GITHUB_ENV
+        echo "1. Download the appropriate archive for your platform" >> $GITHUB_ENV
+        echo "2. Extract to a folder" >> $GITHUB_ENV
+        echo "3. Ensure the \`data/\` folder is in the same directory" >> $GITHUB_ENV
+        echo "4. Run the executable" >> $GITHUB_ENV
+        echo "" >> $GITHUB_ENV
+        echo "### System Requirements" >> $GITHUB_ENV
+        echo "- Linux: libcurl4" >> $GITHUB_ENV
+        echo "- macOS: curl (usually pre-installed)" >> $GITHUB_ENV
+        echo "- Windows: No additional dependencies" >> $GITHUB_ENV
+        echo "- Internet connection for real-time data" >> $GITHUB_ENV
+        echo "" >> $GITHUB_ENV
+        echo "**Full Changelog**: https://github.com/\${{ github.repository }}/compare/\${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: EME Link Budget Calculator ${{ steps.version.outputs.VERSION }}
+        body_path: ${{ github.workspace }}/RELEASE_NOTES.md
+        draft: false
+        prerelease: false
+        files: |
+          all-artifacts/*/*.exe
+          all-artifacts/*/*.exe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true

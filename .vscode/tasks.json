@@ -2,9 +2,24 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Create build directories",
+            "type": "shell",
+            "command": "mkdir",
+            "args": [
+                "-p",
+                "${workspaceFolder}/build/debug",
+                "${workspaceFolder}/build/release"
+            ],
+            "presentation": {
+                "echo": false,
+                "reveal": "silent"
+            }
+        },
+        {
             "label": "Build Debug (Clang)",
             "type": "shell",
             "command": "clang++",
+            "dependsOn": "Create build directories",
             "args": [
                 "-std=c++20",
                 "-g",
@@ -51,6 +66,7 @@
             "label": "Build Release (Clang)",
             "type": "shell",
             "command": "clang++",
+            "dependsOn": "Create build directories",
             "args": [
                 "-std=c++20",
                 "-O3",
@@ -94,6 +110,7 @@
             "label": "Build Test (Clang)",
             "type": "shell",
             "command": "clang++",
+            "dependsOn": "Create build directories",
             "args": [
                 "-std=c++20",
                 "-g",
