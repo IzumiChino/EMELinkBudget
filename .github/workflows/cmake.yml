@@ -58,13 +58,27 @@ jobs:
       run: |
         brew install curl
 
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '3b25193f1f7e3f4be6b96a5c89a989fc40effd48'
+        appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
+
     - name: Set up CMake
       uses: lukka/get-cmake@latest
 
     - name: Create build directory
       run: mkdir -p build
 
-    - name: Configure CMake
+    - name: Configure CMake (Windows)
+      if: runner.os == 'Windows'
+      working-directory: build
+      run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} -DCMAKE_TOOLCHAIN_FILE="${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" ..
+
+    - name: Configure CMake (Unix)
+      if: runner.os != 'Windows'
       working-directory: build
       run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} ..
 
