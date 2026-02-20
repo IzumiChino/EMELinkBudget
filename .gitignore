@@ -16,6 +16,27 @@ x64/
 *.lib
 *.dll
 *.obj
+
+# CMake build directories and files
+build/
+build-cmake/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+CTestTestfile.cmake
+DartConfiguration.tcl
+
+# IDE and editor files
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
 /doc/Architecture.md
 /doc/Bug_Fixes_Report.md
 /doc/Compilation_Fixes.md
