@@ -33,11 +33,11 @@ jobs:
             build-type: Release
             artifact-name: EMELinkBudget-macOS-Release
 
-          # Windows
-          - os: windows-latest
-            cmake-preset: release
-            build-type: Release
-            artifact-name: EMELinkBudget-Windows-Release
+          # Windows - will be added after dependency management is resolved
+          # - os: windows-latest
+          #   cmake-preset: release
+          #   build-type: Release
+          #   artifact-name: EMELinkBudget-Windows-Release
 
     runs-on: ${{ matrix.os }}
 
@@ -58,27 +58,13 @@ jobs:
       run: |
         brew install curl
 
-    - name: Install dependencies (Windows)
-      if: runner.os == 'Windows'
-      uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
-        vcpkgGitCommitId: '3b25193f1f7e3f4be6b96a5c89a989fc40effd48'
-        appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
-
     - name: Set up CMake
       uses: lukka/get-cmake@latest
 
     - name: Create build directory
       run: mkdir -p build
 
-    - name: Configure CMake (Windows)
-      if: runner.os == 'Windows'
-      working-directory: build
-      run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} -DCMAKE_TOOLCHAIN_FILE="${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" ..
-
-    - name: Configure CMake (Unix)
-      if: runner.os != 'Windows'
+    - name: Configure CMake
       working-directory: build
       run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} ..
 
@@ -87,17 +73,11 @@ jobs:
       run: cmake --build . --config ${{ matrix.build-type }} --parallel
 
     - name: Run tests
-      if: runner.os != 'Windows'
       working-directory: build
       run: ctest --output-on-failure
 
-    - name: Run tests (Windows)
-      if: runner.os == 'Windows'
-      working-directory: build
-      run: ctest --output-on-failure -C ${{ matrix.build-type }}
-
-    - name: Prepare artifacts (Unix)
-      if: runner.os != 'Windows' && matrix.build-type == 'Release'
+    - name: Prepare artifacts
+      if: matrix.build-type == 'Release'
       working-directory: build
       run: |
         mkdir -p release-package
@@ -106,19 +86,6 @@ jobs:
         cp -r ../EMELinkBudget/data release-package/ 2>/dev/null || true
         cp ../README.md release-package/ 2>/dev/null || true
         cp ../LICENSE release-package/ 2>/dev/null || true
-
-    - name: Prepare artifacts (Windows)
-      if: runner.os == 'Windows' && matrix.build-type == 'Release'
-      working-directory: build
-      shell: powershell
-      run: |
-        New-Item -ItemType Directory -Force -Path release-package | Out-Null
-        Get-ChildItem "build/windows/Release/" -Include "*.exe" -Recurse | ForEach-Object {
-          Copy-Item $_.FullName "release-package/" -ErrorAction SilentlyContinue
-        }
-        Copy-Item "../EMELinkBudget/data" "release-package/" -Recurse -ErrorAction SilentlyContinue
-        Copy-Item "../README.md" "release-package/" -ErrorAction SilentlyContinue
-        Copy-Item "../LICENSE" "release-package/" -ErrorAction SilentlyContinue
 
     - name: Upload artifacts
       if: matrix.build-type == 'Release'
@@ -154,7 +121,7 @@ jobs:
         echo "## EME Link Budget Calculator ${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
         echo "" >> $GITHUB_ENV
         echo "### Features" >> $GITHUB_ENV
-        echo "- ✅ Cross-platform support (Linux, macOS, Windows)" >> $GITHUB_ENV
+        echo "- ✅ Cross-platform support (Linux, macOS)" >> $GITHUB_ENV
         echo "- Complete EME link budget analysis" >> $GITHUB_ENV
         echo "- Real-time ionosphere data support (GLOTEC)" >> $GITHUB_ENV
         echo "- Moon position from JPL Horizons API" >> $GITHUB_ENV
@@ -169,8 +136,7 @@ jobs:
         echo "" >> $GITHUB_ENV
         echo "### System Requirements" >> $GITHUB_ENV
         echo "- Linux: libcurl4" >> $GITHUB_ENV
-        echo "- macOS: curl (usually pre-installed)" >> $GITHUB_ENV
-        echo "- Windows: No additional dependencies" >> $GITHUB_ENV
+        echo "- macOS: curl and dependencies from Homebrew" >> $GITHUB_ENV
         echo "- Internet connection for real-time data" >> $GITHUB_ENV
         echo "" >> $GITHUB_ENV
         echo "**Full Changelog**: https://github.com/\${{ github.repository }}/compare/\${{ steps.version.outputs.VERSION }}" >> $GITHUB_ENV
@@ -184,8 +150,7 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          all-artifacts/*/*.exe
-          all-artifacts/*/*.exe
+          all-artifacts/*/EMELinkBudget*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true

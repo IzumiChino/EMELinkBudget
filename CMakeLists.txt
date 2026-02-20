@@ -25,8 +25,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/build/${PLATFORM_NAME}/$
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/build/${PLATFORM_NAME}/${CMAKE_BUILD_TYPE}")
 
 # Find required packages
-# Note: On Windows, use vcpkg toolchain (passed via cmake.yml)
-# On Unix, system curl should be available
 find_package(CURL REQUIRED)
 
 # Source files
