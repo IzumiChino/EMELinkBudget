@@ -60,7 +60,8 @@ PathLossResults EMELinkBudget::calculatePathLoss(const GeometryResults& geometry
         geometry.distance_RX_km,
         geometry.moonElevation_TX_deg,
         geometry.moonElevation_RX_deg,
-        m_params.includeAtmosphericLoss);
+        m_params.includeAtmosphericLoss,
+        m_params.useHagforsModel);
 }
 
 PolarizationResults EMELinkBudget::calculatePolarization(const GeometryResults& geometry) {

@@ -126,7 +126,10 @@ NoiseResults NoiseCalculator::calculate(
 // ========== SkyNoiseModel Implementation ==========
 
 SkyNoiseModel::SkyNoiseModel()
-    : m_skyMapLoaded(false) {
+    : m_haslamMap(nullptr), m_skyMapLoaded(false) {
+}
+
+SkyNoiseModel::~SkyNoiseModel() {
 }
 
 double SkyNoiseModel::estimateGalacticLatitude(double ra_deg, double dec_deg) {
@@ -172,19 +175,23 @@ double SkyNoiseModel::getSkyTemp(
     double ra_deg,
     double dec_deg) {
 
-    if (m_skyMapLoaded) {
-        // Use loaded sky map (not implemented yet)
-        // TODO: Implement 408 MHz map lookup
+    if (m_skyMapLoaded && m_haslamMap && m_haslamMap->isLoaded()) {
+        double T_408 = m_haslamMap->getTemperature(ra_deg, dec_deg);
+        if (T_408 > 0.0) {
+            return T_408 * std::pow(frequency_MHz / 408.0, SPECTRAL_INDEX);
+        }
     }
 
-    // Use simplified model
     double galacticLat = estimateGalacticLatitude(ra_deg, dec_deg);
     return calculateSkyTemp_Simplified(frequency_MHz, galacticLat);
 }
 
 bool SkyNoiseModel::loadSkyMap(const std::string& mapPath) {
-    // TODO: Implement 408 MHz sky map loading
-    // For now, return false (not implemented)
-    m_skyMapLoaded = false;
-    return false;
+    m_haslamMap = std::make_unique<HaslamSkyMap>();
+    m_skyMapLoaded = m_haslamMap->loadFITS(mapPath);
+    return m_skyMapLoaded;
+}
+
+bool SkyNoiseModel::isMapLoaded() const {
+    return m_skyMapLoaded && m_haslamMap && m_haslamMap->isLoaded();
 }

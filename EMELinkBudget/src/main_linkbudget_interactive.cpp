@@ -7,16 +7,20 @@
 #include "AstronomyAPIClient.h"
 #include "NOAAGlotecReader.h"
 #include "WMMModel.h"
+#include "NoiseCalculator.h"
 #include <iostream>
 #include <iomanip>
 #include <string>
 #include <limits>
 #include <ctime>
 #include <cmath>
+#include <unistd.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
+SkyNoiseModel g_skyModel;
 
 void clearInputBuffer() {
     std::cin.clear();
@@ -90,6 +94,12 @@ void inputStationData(const std::string& stationName, SiteParameters& site) {
             std::cout << "Invalid grid locator, using manual input..." << std::endl;
             double lat = getDouble("Latitude (degrees, -90 to 90)", 0.0);
             double lon = getDouble("Longitude (degrees, -180 to 180)", 0.0);
+
+            if (lat < -90.0) lat = -90.0;
+            if (lat > 90.0) lat = 90.0;
+            if (lon < -180.0) lon = -180.0;
+            if (lon > 180.0) lon = 180.0;
+
             site.latitude = ParameterUtils::deg2rad(lat);
             site.longitude = ParameterUtils::deg2rad(lon);
             site.gridLocator = MaidenheadGrid::latLonToGrid(lat, lon, 6);
@@ -97,6 +107,12 @@ void inputStationData(const std::string& stationName, SiteParameters& site) {
     } else {
         double lat = getDouble("Latitude (degrees, -90 to 90)", 0.0);
         double lon = getDouble("Longitude (degrees, -180 to 180)", 0.0);
+
+        if (lat < -90.0) lat = -90.0;
+        if (lat > 90.0) lat = 90.0;
+        if (lon < -180.0) lon = -180.0;
+        if (lon > 180.0) lon = 180.0;
+
         site.latitude = ParameterUtils::deg2rad(lat);
         site.longitude = ParameterUtils::deg2rad(lon);
         site.gridLocator = MaidenheadGrid::latLonToGrid(lat, lon, 6);
@@ -402,7 +418,20 @@ void inputIonosphereData(IonosphereData& iono, std::time_t observationTime,
                 std::cout << "  RX TEC: " << tec_rx << " TECU" << std::endl;
 
                 WMMModel wmm;
-                bool wmmLoaded = wmm.loadCoefficientFile("data/WMMHR.COF");
+                const char* wmmPaths[] = {
+                    "data/WMMHR.COF",
+                    "EMELinkBudget/data/WMMHR.COF",
+                    "../data/WMMHR.COF",
+                    "../EMELinkBudget/data/WMMHR.COF"
+                };
+
+                bool wmmLoaded = false;
+                for (const char* path : wmmPaths) {
+                    if (wmm.loadCoefficientFile(path)) {
+                        wmmLoaded = true;
+                        break;
+                    }
+                }
 
                 if (wmmLoaded) {
                     int year = timeInfo->tm_year + 1900;
@@ -444,7 +473,7 @@ void inputIonosphereData(IonosphereData& iono, std::time_t observationTime,
 
                     return;
                 } else {
-                    std::cout << "[!] Could not load WMM model (data/WMM.COF)" << std::endl;
+                    std::cout << "[!] Could not load WMM model (tried multiple paths)" << std::endl;
                     std::cout << "Using estimated magnetic field values..." << std::endl;
 
                     iono.B_magnitude_DX = 5.0e-5;
@@ -562,7 +591,18 @@ void displayResults(const LinkBudgetResults& results) {
 
     std::cout << "\n[*] Path Loss Analysis:" << std::endl;
     std::cout << "  Free Space Loss: " << results.pathLoss.freeSpaceLoss_dB << " dB" << std::endl;
-    std::cout << "  Lunar Scattering: " << results.pathLoss.lunarScatteringLoss_dB << " dB" << std::endl;
+    std::cout << "  Lunar Scattering: " << results.pathLoss.lunarScatteringLoss_dB << " dB";
+    if (results.pathLoss.useHagforsModel) {
+        std::cout << " (Hagfors' Law)" << std::endl;
+        std::cout << "    - Bistatic Angle: " << std::setprecision(2)
+                  << results.pathLoss.bistaticAngle_deg << " deg" << std::endl;
+        std::cout << "    - Roughness Param: " << std::setprecision(3)
+                  << results.pathLoss.hagforsRoughnessParam << std::endl;
+        std::cout << "    - Lunar RCS: " << std::setprecision(2)
+                  << results.pathLoss.lunarRCS_dBsm << " dBsm" << std::endl;
+    } else {
+        std::cout << " (Simple Model)" << std::endl;
+    }
     std::cout << "  Atmospheric Loss: " << results.pathLoss.atmosphericLoss_Total_dB << " dB" << std::endl;
     std::cout << "  Total Path Loss: " << results.pathLoss.totalPathLoss_dB << " dB" << std::endl;
 
@@ -578,7 +618,14 @@ void displayResults(const LinkBudgetResults& results) {
 
     std::cout << "\n[*] Noise Analysis:" << std::endl;
     std::cout << "  Sky Noise: " << std::setprecision(1)
-              << results.noise.skyNoiseTemp_K << " K" << std::endl;
+              << results.noise.skyNoiseTemp_K << " K";
+
+    if (g_skyModel.isMapLoaded()) {
+        std::cout << " (Haslam 408 MHz map)" << std::endl;
+    } else {
+        std::cout << " (Simplified model)" << std::endl;
+    }
+
     std::cout << "  Ground Spillover: " << results.noise.groundSpilloverTemp_K << " K" << std::endl;
     std::cout << "  System Noise: " << results.noise.systemNoiseTemp_K << " K" << std::endl;
     std::cout << "  Noise Power: " << std::setprecision(2)
@@ -608,6 +655,29 @@ int main() {
     printHeader("EME Link Budget Calculator - Interactive Mode");
     std::cout << "Complete EME Link Analysis with User Input\n" << std::endl;
 
+    std::cout << "[*] Loading Haslam 408 MHz Sky Map..." << std::endl;
+
+    const char* haslamPaths[] = {
+        "EMELinkBudget/data/haslam408_dsds_Remazeilles2014_ns2048.fits",
+        "data/haslam408_dsds_Remazeilles2014_ns2048.fits",
+        "../EMELinkBudget/data/haslam408_dsds_Remazeilles2014_ns2048.fits",
+        "../../EMELinkBudget/data/haslam408_dsds_Remazeilles2014_ns2048.fits"
+    };
+
+    bool haslamLoaded = false;
+    for (const char* path : haslamPaths) {
+        if (g_skyModel.loadSkyMap(path)) {
+            haslamLoaded = true;
+            std::cout << "[+] Haslam sky map loaded successfully" << std::endl;
+            break;
+        }
+    }
+
+    if (!haslamLoaded) {
+        std::cout << "[!] Could not load Haslam sky map, using simplified model" << std::endl;
+    }
+    std::cout << std::endl;
+
     LinkBudgetParameters params;
 
     params.observationTime = inputObservationTime();
@@ -630,6 +700,7 @@ int main() {
     params.includeMoonReflection = getYesNo("Include moon reflection (polarization flip)");
     params.includeAtmosphericLoss = getYesNo("Include atmospheric loss");
     params.includeGroundSpillover = getYesNo("Include ground spillover noise");
+    params.useHagforsModel = getYesNo("Use Hagfors' Law for lunar scattering (recommended)");
     std::cout << std::endl;
 
     std::cout << "Calculating link budget..." << std::endl;

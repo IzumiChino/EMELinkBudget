@@ -61,6 +61,13 @@ struct PathLossResults {
     double wavelength_m;
     double lunarReflectivity;
 
+    // Hagfors' Law parameters
+    double bistaticAngle_deg;           // Bistatic angle (incidence angle)
+    double hagforsRoughnessParam;       // Surface roughness parameter C
+    double lunarRCS_dBsm;               // Radar cross-section in dBsm
+    double hagforsGain_dB;              // Moon gain from Hagfors model
+    bool useHagforsModel;               // Whether Hagfors model was used
+
     PathLossResults()
         : freeSpaceLoss_dB(0.0),
           lunarScatteringLoss_dB(51.5),
@@ -69,7 +76,12 @@ struct PathLossResults {
           atmosphericLoss_Total_dB(0.0),
           totalPathLoss_dB(0.0),
           wavelength_m(0.0),
-          lunarReflectivity(0.07) {}
+          lunarReflectivity(0.07),
+          bistaticAngle_deg(0.0),
+          hagforsRoughnessParam(0.0),
+          lunarRCS_dBsm(0.0),
+          hagforsGain_dB(0.0),
+          useHagforsModel(true) {}
 };
 
 // ========== Polarization Results ==========
@@ -195,6 +207,7 @@ double frequency_MHz;
     bool includeMoonReflection;
     bool includeAtmosphericLoss;
     bool includeGroundSpillover;
+    bool useHagforsModel;
 
     LinkBudgetParameters()
         : frequency_MHz(144.0),
@@ -211,5 +224,6 @@ double frequency_MHz;
           includeSpatialRotation(true),
           includeMoonReflection(true),
           includeAtmosphericLoss(true),
-          includeGroundSpillover(true) {}
+          includeGroundSpillover(true),
+          useHagforsModel(true) {}
 };

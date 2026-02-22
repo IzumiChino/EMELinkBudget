@@ -20,9 +20,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Output directories
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/build/${PLATFORM_NAME}/${CMAKE_BUILD_TYPE}")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/build/${PLATFORM_NAME}/${CMAKE_BUILD_TYPE}")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/build/${PLATFORM_NAME}/${CMAKE_BUILD_TYPE}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 # Find required packages
 find_package(CURL REQUIRED)
@@ -47,6 +47,7 @@ set(SOURCES
     ${SOURCE_DIR}/WMMModel.cpp
     ${SOURCE_DIR}/SimpleHttpClient.cpp
     ${SOURCE_DIR}/AstronomyAPIClient.cpp
+    ${SOURCE_DIR}/HaslamSkyMap.cpp
 )
 
 set(HEADERS
@@ -65,12 +66,12 @@ set(HEADERS
     ${SOURCE_DIR}/WMMModel.h
     ${SOURCE_DIR}/SimpleHttpClient.h
     ${SOURCE_DIR}/AstronomyAPIClient.h
+    ${SOURCE_DIR}/HaslamSkyMap.h
     ${SOURCE_DIR}/LinkBudgetTypes.h
     ${SOURCE_DIR}/Parameters.h
     ${SOURCE_DIR}/MaidenheadGrid.h
 )
 
-# Main executable
 add_executable(EMELinkBudget ${SOURCES} ${HEADERS})
 
 # Include directories
@@ -123,6 +124,7 @@ set(TEST_SOURCES
     ${SOURCE_DIR}/WMMModel.cpp
     ${SOURCE_DIR}/SimpleHttpClient.cpp
     ${SOURCE_DIR}/AstronomyAPIClient.cpp
+    ${SOURCE_DIR}/HaslamSkyMap.cpp
 )
 
 add_executable(test_linkbudget_quick ${TEST_SOURCES})

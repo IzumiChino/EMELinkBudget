@@ -50,3 +50,4 @@ DartConfiguration.tcl
 /doc/MoonCalendar_Integration.md
 /doc/Timezone_Bug_Fix.md
 /EMELinkBudget/compile_test_wmm.bat
+test_wmm_load
