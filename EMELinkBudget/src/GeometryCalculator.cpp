@@ -87,17 +87,16 @@ GeometryResults GeometryCalculator::calculate(
     const SiteParameters& txSite,
     const SiteParameters& rxSite,
     const MoonEphemeris& moonEphem,
-    std::time_t observationTime) {
+    std::time_t observationTime,
+    double frequency_MHz) {
 
     GeometryResults results;
 
-    // Use provided moon ephemeris data
     results.moonRA_deg = rad2deg(moonEphem.rightAscension);
     results.moonDEC_deg = rad2deg(moonEphem.declination);
     results.moonDistance_km = moonEphem.distance_km;
     results.ephemerisSource = moonEphem.ephemerisSource;
 
-    // Calculate hour angles if not provided
     double hourAngle_TX = moonEphem.hourAngle_DX;
     double hourAngle_RX = moonEphem.hourAngle_Home;
 
@@ -113,11 +112,9 @@ GeometryResults GeometryCalculator::calculate(
             observationTime);
     }
 
-    // Store hour angles in results
     results.hourAngle_TX_rad = hourAngle_TX;
     results.hourAngle_RX_rad = hourAngle_RX;
 
-    // Calculate moon position for TX station
     calculateMoonPosition(
         txSite.latitude, txSite.longitude,
         moonEphem.rightAscension, moonEphem.declination,
@@ -127,7 +124,6 @@ GeometryResults GeometryCalculator::calculate(
     results.moonAzimuth_TX_deg = rad2deg(results.moonAzimuth_TX_deg);
     results.moonElevation_TX_deg = rad2deg(results.moonElevation_TX_deg);
 
-    // Calculate moon position for RX station
     calculateMoonPosition(
         rxSite.latitude, rxSite.longitude,
         moonEphem.rightAscension, moonEphem.declination,
@@ -137,7 +133,6 @@ GeometryResults GeometryCalculator::calculate(
     results.moonAzimuth_RX_deg = rad2deg(results.moonAzimuth_RX_deg);
     results.moonElevation_RX_deg = rad2deg(results.moonElevation_RX_deg);
 
-    // Calculate distances
     results.distance_TX_km = calculateDistance(
         txSite.latitude, txSite.longitude,
         moonEphem.rightAscension, moonEphem.declination,
@@ -150,8 +145,21 @@ GeometryResults GeometryCalculator::calculate(
 
     results.totalPathLength_km = results.distance_TX_km + results.distance_RX_km;
 
-    // Doppler shift calculation (placeholder - will be implemented in DopplerCalculator)
     results.dopplerShift_Hz = 0.0;
+
+    if (moonEphem.librationLonRate_deg_day != 0.0 || moonEphem.librationLatRate_deg_day != 0.0) {
+        auto spreading = SpectralSpreadingCalculator::calculateSpectralSpreading(
+            frequency_MHz,
+            moonEphem.distance_km,
+            moonEphem.librationLonRate_deg_day,
+            moonEphem.librationLatRate_deg_day,
+            moonEphem.rangeRate_km_s
+        );
+
+        results.spectralSpread_Hz = spreading.dopplerSpread_Hz;
+        results.coherentIntegrationLimit_s = spreading.coherentIntegrationLimit_s;
+        results.librationVelocity_m_s = spreading.librationVelocity_m_s;
+    }
 
     return results;
 }

@@ -50,7 +50,8 @@ GeometryResults EMELinkBudget::calculateGeometry() {
         m_params.txSite,
         m_params.rxSite,
         m_params.moonEphemeris,
-        m_params.observationTime);
+        m_params.observationTime,
+        m_params.frequency_MHz);
 }
 
 PathLossResults EMELinkBudget::calculatePathLoss(const GeometryResults& geometry) {

@@ -48,6 +48,7 @@ set(SOURCES
     ${SOURCE_DIR}/SimpleHttpClient.cpp
     ${SOURCE_DIR}/AstronomyAPIClient.cpp
     ${SOURCE_DIR}/HaslamSkyMap.cpp
+    ${SOURCE_DIR}/SpectralSpreadingCalculator.cpp
 )
 
 set(HEADERS
@@ -67,6 +68,7 @@ set(HEADERS
     ${SOURCE_DIR}/SimpleHttpClient.h
     ${SOURCE_DIR}/AstronomyAPIClient.h
     ${SOURCE_DIR}/HaslamSkyMap.h
+    ${SOURCE_DIR}/SpectralSpreadingCalculator.h
     ${SOURCE_DIR}/LinkBudgetTypes.h
     ${SOURCE_DIR}/Parameters.h
     ${SOURCE_DIR}/MaidenheadGrid.h
@@ -125,6 +127,7 @@ set(TEST_SOURCES
     ${SOURCE_DIR}/SimpleHttpClient.cpp
     ${SOURCE_DIR}/AstronomyAPIClient.cpp
     ${SOURCE_DIR}/HaslamSkyMap.cpp
+    ${SOURCE_DIR}/SpectralSpreadingCalculator.cpp
 )
 
 add_executable(test_linkbudget_quick ${TEST_SOURCES})

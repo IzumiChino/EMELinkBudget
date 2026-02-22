@@ -37,6 +37,9 @@ struct GeometryResults {
     double moonDistance_km;
     double hourAngle_TX_rad;
     double hourAngle_RX_rad;
+    double spectralSpread_Hz;
+    double coherentIntegrationLimit_s;
+    double librationVelocity_m_s;
     std::string ephemerisSource;
 
     GeometryResults()
@@ -47,6 +50,8 @@ struct GeometryResults {
           moonAzimuth_RX_deg(0.0), moonElevation_RX_deg(0.0),
           moonDistance_km(384400.0),
           hourAngle_TX_rad(0.0), hourAngle_RX_rad(0.0),
+          spectralSpread_Hz(0.0), coherentIntegrationLimit_s(0.0),
+          librationVelocity_m_s(0.0),
           ephemerisSource("Manual") {}
 };
 

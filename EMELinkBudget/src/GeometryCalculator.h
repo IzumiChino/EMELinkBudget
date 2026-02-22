@@ -2,6 +2,7 @@
 
 #include "LinkBudgetTypes.h"
 #include "Parameters.h"
+#include "SpectralSpreadingCalculator.h"
 #include <cmath>
 #include <ctime>
 
@@ -14,7 +15,8 @@ public:
         const SiteParameters& txSite,
         const SiteParameters& rxSite,
         const MoonEphemeris& moonEphem,
-        std::time_t observationTime);
+        std::time_t observationTime,
+        double frequency_MHz = 432.0);
 
     void calculateMoonPosition(
         double latitude, double longitude,

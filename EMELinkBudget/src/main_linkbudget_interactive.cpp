@@ -265,6 +265,20 @@ void inputMoonEphemeris(MoonEphemeris& moon, std::time_t observationTime, const 
             moon.rightAscension = apiData.ra_deg * M_PI / 180.0;
             moon.declination = apiData.dec_deg * M_PI / 180.0;
             moon.distance_km = apiData.distance_km;
+            moon.rangeRate_km_s = apiData.range_rate_km_s;
+            moon.librationLon_deg = apiData.libration_lon_deg;
+            moon.librationLat_deg = apiData.libration_lat_deg;
+            moon.librationLonRate_deg_day = apiData.libration_lon_rate_deg_day;
+            moon.librationLatRate_deg_day = apiData.libration_lat_rate_deg_day;
+
+            if (moon.librationLonRate_deg_day == 0.0 && moon.librationLatRate_deg_day == 0.0) {
+                double lunarMonth_days = 27.32166;
+                double librationLonAmplitude_deg = 7.9;
+                double librationLatAmplitude_deg = 6.7;
+                moon.librationLonRate_deg_day = (2.0 * M_PI * librationLonAmplitude_deg) / lunarMonth_days;
+                moon.librationLatRate_deg_day = (2.0 * M_PI * librationLatAmplitude_deg) / lunarMonth_days;
+            }
+
             moon.hourAngle_DX = 0.0;
             moon.hourAngle_Home = 0.0;
             moon.ephemerisSource = "JPL Horizons";
@@ -275,6 +289,14 @@ void inputMoonEphemeris(MoonEphemeris& moon, std::time_t observationTime, const 
             std::cout << "  => DEC: " << apiData.dec_deg << " deg" << std::endl;
             std::cout << "  => Distance: " << std::setprecision(1)
                       << apiData.distance_km << " km" << std::endl;
+
+            if (apiData.libration_lon_rate_deg_day != 0.0 || apiData.libration_lat_rate_deg_day != 0.0) {
+                std::cout << "  => Libration rates: Lon=" << std::setprecision(3)
+                          << apiData.libration_lon_rate_deg_day << " deg/day, Lat="
+                          << apiData.libration_lat_rate_deg_day << " deg/day" << std::endl;
+            } else {
+                std::cout << "  => Using estimated libration rates" << std::endl;
+            }
 
             // Try to improve DEC accuracy with calendar data
             MoonCalendarReader calendar;
@@ -588,6 +610,16 @@ void displayResults(const LinkBudgetResults& results) {
     std::cout << "  TX Elevation: " << results.geometry.moonElevation_TX_deg << " deg" << std::endl;
     std::cout << "  RX Elevation: " << results.geometry.moonElevation_RX_deg << " deg" << std::endl;
     std::cout << "  Path Length: " << results.geometry.totalPathLength_km << " km" << std::endl;
+
+    if (results.geometry.spectralSpread_Hz > 0.0) {
+        std::cout << "\n[*] Spectral Spreading (Libration Effects):" << std::endl;
+        std::cout << "  Doppler Spread: " << std::setprecision(3)
+                  << results.geometry.spectralSpread_Hz << " Hz" << std::endl;
+        std::cout << "  Coherent Integration Limit: " << std::setprecision(3)
+                  << results.geometry.coherentIntegrationLimit_s << " s" << std::endl;
+        std::cout << "  Libration Velocity: " << std::setprecision(2)
+                  << results.geometry.librationVelocity_m_s << " m/s" << std::endl;
+    }
 
     std::cout << "\n[*] Path Loss Analysis:" << std::endl;
     std::cout << "  Free Space Loss: " << results.pathLoss.freeSpaceLoss_dB << " dB" << std::endl;

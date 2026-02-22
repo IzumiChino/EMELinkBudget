@@ -22,23 +22,42 @@ double NoiseCalculator::calculateSkyNoiseTemp(
 
 double NoiseCalculator::calculateGroundSpilloverTemp(
     double elevation_deg,
+    double rxGain_dBi,
     double physicalTemp_K) {
 
     if (elevation_deg < 0) {
         return physicalTemp_K;
     }
 
-    double spilloverFactor = 0.0;
+    double gainLinear = std::pow(10.0, rxGain_dBi / 10.0);
+    double beamwidth_deg = 70.0 / std::sqrt(gainLinear);
 
-    if (elevation_deg < 10.0) {
-        spilloverFactor = 0.3 - (elevation_deg / 10.0) * 0.2;
-    } else if (elevation_deg < 30.0) {
-        spilloverFactor = 0.1 - ((elevation_deg - 10.0) / 20.0) * 0.08;
-    } else {
-        spilloverFactor = 0.02;
+    double criticalElevation = 1.5 * beamwidth_deg;
+
+    if (elevation_deg > criticalElevation) {
+        return physicalTemp_K * 0.02;
     }
 
-    return physicalTemp_K * spilloverFactor;
+    double spilloverFraction = 0.0;
+    int numSamples = 36;
+    double angleStep = beamwidth_deg * 3.0 / numSamples;
+
+    for (int i = 0; i < numSamples; ++i) {
+        double theta = i * angleStep;
+        double patternValue = std::pow(std::cos(theta * M_PI / 180.0 / beamwidth_deg * 1.5), 2.0);
+
+        if (patternValue < 0.01) patternValue = 0.01;
+
+        double pointingAngle = elevation_deg - theta;
+
+        if (pointingAngle < 0) {
+            spilloverFraction += patternValue * angleStep;
+        }
+    }
+
+    double normalizedSpillover = spilloverFraction / (beamwidth_deg * 3.0);
+
+    return physicalTemp_K * normalizedSpillover;
 }
 
 double NoiseCalculator::calculateMoonBodyTemp() {
@@ -91,7 +110,7 @@ NoiseResults NoiseCalculator::calculate(
 
     if (includeGroundSpillover) {
         results.groundSpilloverTemp_K = calculateGroundSpilloverTemp(
-            elevation_deg, physicalTemp_K);
+            elevation_deg, rxGain_dBi, physicalTemp_K);
     } else {
         results.groundSpilloverTemp_K = 0.0;
     }

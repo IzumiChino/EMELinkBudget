@@ -51,13 +51,14 @@ std::string AstronomyAPIClient::buildAPIUrl(
     url << "&STOP_TIME='" << timeStrStop << "'";
     url << "&STEP_SIZE='1m'";
 
-    url << "&QUANTITIES='1,20'";
+    url << "&QUANTITIES='1,20,31'";
 
     url << "&CSV_FORMAT='YES'";
     url << "&CAL_FORMAT='CAL'";
     url << "&TIME_DIGITS='FRACSEC'";
     url << "&ANG_FORMAT='DEG'";
     url << "&RANGE_UNITS='KM'";
+    url << "&EXTRA_PREC='YES'";
 
     return url.str();
 }
@@ -258,6 +259,20 @@ bool AstronomyAPIClient::parseResponse(
         result.ra_deg = std::stod(fields[3]);
         result.dec_deg = std::stod(fields[4]);
         result.distance_km = std::stod(fields[5]);
+
+        if (fields.size() >= 7) {
+            result.range_rate_km_s = std::stod(fields[6]);
+        }
+
+        if (fields.size() >= 9) {
+            result.libration_lon_deg = std::stod(fields[7]);
+            result.libration_lat_deg = std::stod(fields[8]);
+        }
+
+        if (fields.size() >= 11) {
+            result.libration_lon_rate_deg_day = std::stod(fields[9]);
+            result.libration_lat_rate_deg_day = std::stod(fields[10]);
+        }
 
         if (result.ra_deg < 0 || result.ra_deg > 360) {
             m_lastError = "RA out of valid range (0-360)";

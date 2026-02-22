@@ -29,6 +29,7 @@ public:
 
     double calculateGroundSpilloverTemp(
         double elevation_deg,
+        double rxGain_dBi,
         double physicalTemp_K = 290.0);
 
     double calculateMoonBodyTemp();

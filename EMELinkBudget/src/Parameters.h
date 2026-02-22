@@ -63,6 +63,11 @@ struct MoonEphemeris {
     double elevation_DX;
     double azimuth_Home;
     double elevation_Home;
+    double rangeRate_km_s;
+    double librationLon_deg;
+    double librationLat_deg;
+    double librationLonRate_deg_day;
+    double librationLatRate_deg_day;
     std::time_t observationTime;
     double julianDate;
     std::string ephemerisSource;
@@ -72,6 +77,8 @@ struct MoonEphemeris {
           hourAngle_DX(0.0), hourAngle_Home(0.0),
           azimuth_DX(0.0), elevation_DX(0.0),
           azimuth_Home(0.0), elevation_Home(0.0),
+          rangeRate_km_s(0.0), librationLon_deg(0.0), librationLat_deg(0.0),
+          librationLonRate_deg_day(0.0), librationLatRate_deg_day(0.0),
           observationTime(0), julianDate(0.0),
           ephemerisSource("Manual") {}
 };
