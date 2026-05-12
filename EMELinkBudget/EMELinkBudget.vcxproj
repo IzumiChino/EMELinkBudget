@@ -146,46 +146,9 @@
     <ClCompile Include="src\SimpleHttpClient.cpp" />
     <ClCompile Include="src\WMMModel.cpp" />
     <!-- Main Programs - Choose ONE to compile -->
-    <!-- Demo Mode: Pre-configured example -->
-    <ClCompile Include="src\main_linkbudget.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
     <!-- Interactive Mode: User input - ACTIVE -->
     <ClCompile Include="src\main_linkbudget_interactive.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <!-- Old Main Programs - EXCLUDED FROM BUILD -->
-    <ClCompile Include="src\main.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\main_interactive.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
-    <!-- Test Programs - EXCLUDED FROM BUILD -->
-    <ClCompile Include="src\test_calendar.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\test_glotec.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\test_grid.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\test_ionex.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\test_ionosphere_physics.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\test_user_case.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\test_wmm.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\test_linkbudget_quick.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

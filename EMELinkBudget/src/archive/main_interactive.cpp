@@ -15,12 +15,12 @@ void clearInputBuffer() {
 }
 
 void printSeparator(char c = '=', int length = 75) {
-    std::cout << std::string(length, c) << std::endl;
+    std::cout << std::string(length, c) << '\n';
 }
 
 void printHeader(const std::string& title) {
     printSeparator();
-    std::cout << "  " << title << std::endl;
+    std::cout << "  " << title << '\n';
     printSeparator();
 }
 
@@ -29,7 +29,7 @@ int main() {
 
     printHeader("EME Faraday Rotation Calculator - Interactive Mode");
     std::cout << "\nThis program calculates polarization loss due to Faraday rotation\n";
-    std::cout << "in Earth-Moon-Earth (EME) communications.\n" << std::endl;
+    std::cout << "in Earth-Moon-Earth (EME) communications.\n" << '\n';
 
     // ========== Input: Frequency ==========
     double frequency_MHz;
@@ -46,7 +46,7 @@ int main() {
     FaradayRotation calculator(config);
 
     // ========== Input: DX Station ==========
-    std::cout << "\n--- DX Station Configuration ---" << std::endl;
+    std::cout << "\n--- DX Station Configuration ---" << '\n';
     std::cout << "Enter DX station grid locator (e.g., FN20xa): ";
     std::string dx_grid;
     std::cin >> dx_grid;
@@ -65,12 +65,12 @@ int main() {
     try {
         calculator.setDXStationByGrid(dx_grid, ParameterUtils::deg2rad(dx_psi), ParameterUtils::deg2rad(dx_chi));
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << '\n';
         return 1;
     }
 
     // ========== Input: Home Station ==========
-    std::cout << "\n--- Home Station Configuration ---" << std::endl;
+    std::cout << "\n--- Home Station Configuration ---" << '\n';
     std::cout << "Enter Home station grid locator (e.g., PM95vr): ";
     std::string home_grid;
     std::cin >> home_grid;
@@ -89,12 +89,12 @@ int main() {
     try {
         calculator.setHomeStationByGrid(home_grid, ParameterUtils::deg2rad(home_psi), ParameterUtils::deg2rad(home_chi));
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << '\n';
         return 1;
     }
 
     // ========== Input: Ionosphere Parameters ==========
-    std::cout << "\n--- Ionosphere Parameters ---" << std::endl;
+    std::cout << "\n--- Ionosphere Parameters ---" << '\n';
     std::cout << "Data source options:\n";
     std::cout << "  1. Load from IONEX file (data.txt)\n";
     std::cout << "  2. Use default values (vTEC=25 TECU, B=50uT, inclination=60deg)\n";
@@ -110,11 +110,11 @@ int main() {
 
     if (iono_option == 1) {
         IonosphereDataProvider provider;
-        std::cout << "Loading IONEX file (data.txt)..." << std::endl;
+        std::cout << "Loading IONEX file (data.txt)..." << '\n';
 
         if (!provider.loadIonexFile("../data/data.txt")) {
-            std::cerr << "Error: Could not load data.txt" << std::endl;
-            std::cerr << "Falling back to default values." << std::endl;
+            std::cerr << "Error: Could not load data.txt" << '\n';
+            std::cerr << "Falling back to default values." << '\n';
             iono.vTEC_DX = 25.0;
             iono.vTEC_Home = 25.0;
             iono.hmF2_DX = 350.0;
@@ -124,16 +124,16 @@ int main() {
             iono.B_inclination_DX = ParameterUtils::deg2rad(60.0);
             iono.B_inclination_Home = ParameterUtils::deg2rad(60.0);
         } else {
-            std::cout << "IONEX file loaded successfully!" << std::endl;
+            std::cout << "IONEX file loaded successfully!" << '\n';
 
-            std::cout << "Loading WMM model (WMMHR.COF)..." << std::endl;
+            std::cout << "Loading WMM model (WMMHR.COF)..." << '\n';
             if (!provider.loadWMMFile("../data/WMMHR.COF")) {
-                std::cout << "Warning: Could not load WMM file. Using default magnetic field values." << std::endl;
+                std::cout << "Warning: Could not load WMM file. Using default magnetic field values." << '\n';
             } else {
-                std::cout << "WMM model loaded successfully!" << std::endl;
+                std::cout << "WMM model loaded successfully!" << '\n';
             }
 
-            std::cout << "\nEnter observation date and time (UTC):" << std::endl;
+            std::cout << "\nEnter observation date and time (UTC):" << '\n';
             std::cout << "Year (e.g., 2026): ";
             int year;
             std::cin >> year;
@@ -159,7 +159,7 @@ int main() {
             clearInputBuffer();
 
             if (obs_time.tm_mday == 14 && month == 1)
-				std::cout << "Happy Birthday Mutsumi Wakaba!" << std::endl;
+                std::cout << "Happy Birthday Mutsumi Wakaba!" << '\n';
 
             obs_time.tm_sec = 0;
             obs_time.tm_isdst = -1;
@@ -174,20 +174,20 @@ int main() {
 
             if (provider.getIonosphereData(obs_time, lat_dx, lon_dx, height_dx_km,
                                           lat_home, lon_home, height_home_km, iono)) {
-                std::cout << "\nIonosphere data retrieved:" << std::endl;
-                std::cout << "  DX vTEC: " << iono.vTEC_DX << " TECU" << std::endl;
-                std::cout << "  Home vTEC: " << iono.vTEC_Home << " TECU" << std::endl;
+                std::cout << "\nIonosphere data retrieved:" << '\n';
+                std::cout << "  DX vTEC: " << iono.vTEC_DX << " TECU" << '\n';
+                std::cout << "  Home vTEC: " << iono.vTEC_Home << " TECU" << '\n';
                 if (provider.isWMMLoaded()) {
-                    std::cout << "  DX Magnetic Field: " << iono.B_magnitude_DX * 1e9 << " nT" << std::endl;
-                    std::cout << "  DX Inclination: " << ParameterUtils::rad2deg(iono.B_inclination_DX) << " deg" << std::endl;
-                    std::cout << "  DX Declination: " << ParameterUtils::rad2deg(iono.B_declination_DX) << " deg" << std::endl;
-                    std::cout << "  Home Magnetic Field: " << iono.B_magnitude_Home * 1e9 << " nT" << std::endl;
-                    std::cout << "  Home Inclination: " << ParameterUtils::rad2deg(iono.B_inclination_Home) << " deg" << std::endl;
-                    std::cout << "  Home Declination: " << ParameterUtils::rad2deg(iono.B_declination_Home) << " deg" << std::endl;
+                    std::cout << "  DX Magnetic Field: " << iono.B_magnitude_DX * 1e9 << " nT" << '\n';
+                    std::cout << "  DX Inclination: " << ParameterUtils::rad2deg(iono.B_inclination_DX) << " deg" << '\n';
+                    std::cout << "  DX Declination: " << ParameterUtils::rad2deg(iono.B_declination_DX) << " deg" << '\n';
+                    std::cout << "  Home Magnetic Field: " << iono.B_magnitude_Home * 1e9 << " nT" << '\n';
+                    std::cout << "  Home Inclination: " << ParameterUtils::rad2deg(iono.B_inclination_Home) << " deg" << '\n';
+                    std::cout << "  Home Declination: " << ParameterUtils::rad2deg(iono.B_declination_Home) << " deg" << '\n';
                 }
             } else {
-                std::cerr << "Error: Could not retrieve TEC data for specified time/location" << std::endl;
-                std::cerr << "Falling back to default values." << std::endl;
+                std::cerr << "Error: Could not retrieve TEC data for specified time/location" << '\n';
+                std::cerr << "Falling back to default values." << '\n';
                 iono.vTEC_DX = 25.0;
                 iono.vTEC_Home = 25.0;
                 iono.hmF2_DX = 350.0;
@@ -207,7 +207,7 @@ int main() {
         iono.B_magnitude_Home = 5.0e-5;
         iono.B_inclination_DX = ParameterUtils::deg2rad(60.0);
         iono.B_inclination_Home = ParameterUtils::deg2rad(60.0);
-        std::cout << "Using default values (vTEC=25 TECU, hmF2=350km, B=50uT, inclination=60deg)" << std::endl;
+        std::cout << "Using default values (vTEC=25 TECU, hmF2=350km, B=50uT, inclination=60deg)" << '\n';
     } else {
         std::cout << "Enter DX station vTEC (TECU, typical: 10-50): ";
         std::cin >> iono.vTEC_DX;
@@ -251,7 +251,7 @@ int main() {
     }
     calculator.setIonosphereData(iono);
 
-    std::cout << "\n--- Moon Ephemeris ---" << std::endl;
+    std::cout << "\n--- Moon Ephemeris ---" << '\n';
     std::cout << "Do you have moon elevation/azimuth data? (y/n): ";
     char have_elev;
     std::cin >> have_elev;
@@ -304,7 +304,7 @@ int main() {
                 date_only.tm_sec = 0;
 
                 if (calendar.getMoonDeclination(date_only, moon_dec)) {
-                    std::cout << "Moon declination from calendar: " << moon_dec << " deg" << std::endl;
+                    std::cout << "Moon declination from calendar: " << moon_dec << " deg" << '\n';
                 } else {
                     std::cout << "Could not find declination in calendar. Please enter manually: ";
                     std::cin >> moon_dec;
@@ -369,7 +369,7 @@ int main() {
                 date_only.tm_sec = 0;
 
                 if (calendar.getMoonDeclination(date_only, moon_dec)) {
-                    std::cout << "Moon declination from calendar: " << moon_dec << " deg" << std::endl;
+                    std::cout << "Moon declination from calendar: " << moon_dec << " deg" << '\n';
                 } else {
                     std::cout << "Could not find declination in calendar. Please enter manually: ";
                     std::cin >> moon_dec;
@@ -409,68 +409,68 @@ int main() {
     moon.distance_km = moon_distance;
     calculator.setMoonEphemeris(moon);
 
-    std::cout << "\nCalculating..." << std::endl;
+    std::cout << "\nCalculating..." << '\n';
     CalculationResults results = calculator.calculate();
 
     const MoonEphemeris& moon_data = calculator.getMoonEphemeris();
-    std::cout << "\nDebug - Calculated Moon Elevations:" << std::endl;
-    std::cout << "  DX Elevation: " << ParameterUtils::rad2deg(moon_data.elevation_DX) << " deg" << std::endl;
-    std::cout << "  Home Elevation: " << ParameterUtils::rad2deg(moon_data.elevation_Home) << " deg" << std::endl;
+    std::cout << "\nDebug - Calculated Moon Elevations:" << '\n';
+    std::cout << "  DX Elevation: " << ParameterUtils::rad2deg(moon_data.elevation_DX) << " deg" << '\n';
+    std::cout << "  Home Elevation: " << ParameterUtils::rad2deg(moon_data.elevation_Home) << " deg" << '\n';
 
     printHeader("Calculation Results");
 
     if (!results.calculationSuccess) {
-        std::cerr << "Error: " << results.errorMessage << std::endl;
+        std::cerr << "Error: " << results.errorMessage << '\n';
         return 1;
     }
 
-    std::cout << "\n--- Station Information ---" << std::endl;
-    std::cout << "DX Grid: " << calculator.getDXStation().gridLocator << std::endl;
-    std::cout << "Home Grid: " << calculator.getHomeStation().gridLocator << std::endl;
+    std::cout << "\n--- Station Information ---" << '\n';
+    std::cout << "DX Grid: " << calculator.getDXStation().gridLocator << '\n';
+    std::cout << "Home Grid: " << calculator.getHomeStation().gridLocator << '\n';
     std::cout << "Ground Distance: " << std::fixed << std::setprecision(1)
-              << calculator.calculateStationDistance() << " km" << std::endl;
+              << calculator.calculateStationDistance() << " km" << '\n';
     std::cout << "Frequency: " << frequency_MHz << " MHz ("
-              << ParameterUtils::getFrequencyBand(frequency_MHz) << " band)" << std::endl;
+              << ParameterUtils::getFrequencyBand(frequency_MHz) << " band)" << '\n';
 
-    std::cout << "\n--- Rotation Components ---" << std::endl;
+    std::cout << "\n--- Rotation Components ---" << '\n';
     std::cout << "Spatial Rotation: " << std::setprecision(3)
-              << results.spatialRotation_deg << " deg" << std::endl;
-    std::cout << "DX Faraday Rotation: " << results.faradayRotation_DX_deg << " deg" << std::endl;
-    std::cout << "Home Faraday Rotation: " << results.faradayRotation_Home_deg << " deg" << std::endl;
-    std::cout << "Total Rotation: " << results.totalRotation_deg << " deg" << std::endl;
+              << results.spatialRotation_deg << " deg" << '\n';
+    std::cout << "DX Faraday Rotation: " << results.faradayRotation_DX_deg << " deg" << '\n';
+    std::cout << "Home Faraday Rotation: " << results.faradayRotation_Home_deg << " deg" << '\n';
+    std::cout << "Total Rotation: " << results.totalRotation_deg << " deg" << '\n';
 
-    std::cout << "\n--- Ionosphere Parameters (Precise Model) ---" << std::endl;
+    std::cout << "\n--- Ionosphere Parameters (Precise Model) ---" << '\n';
     const IonosphereData& iono_data = calculator.getIonosphereData();
-    std::cout << "DX vTEC: " << std::setprecision(2) << iono_data.vTEC_DX << " TECU" << std::endl;
-    std::cout << "DX hmF2: " << iono_data.hmF2_DX << " km" << std::endl;
-    std::cout << "DX Mapping Factor: " << std::setprecision(4) << results.slantFactor_DX << std::endl;
-    std::cout << "Home vTEC: " << std::setprecision(2) << iono_data.vTEC_Home << " TECU" << std::endl;
-    std::cout << "Home hmF2: " << iono_data.hmF2_Home << " km" << std::endl;
-    std::cout << "Home Mapping Factor: " << std::setprecision(4) << results.slantFactor_Home << std::endl;
+    std::cout << "DX vTEC: " << std::setprecision(2) << iono_data.vTEC_DX << " TECU" << '\n';
+    std::cout << "DX hmF2: " << iono_data.hmF2_DX << " km" << '\n';
+    std::cout << "DX Mapping Factor: " << std::setprecision(4) << results.slantFactor_DX << '\n';
+    std::cout << "Home vTEC: " << std::setprecision(2) << iono_data.vTEC_Home << " TECU" << '\n';
+    std::cout << "Home hmF2: " << iono_data.hmF2_Home << " km" << '\n';
+    std::cout << "Home Mapping Factor: " << std::setprecision(4) << results.slantFactor_Home << '\n';
 
-    std::cout << "\n--- Link Parameters ---" << std::endl;
+    std::cout << "\n--- Link Parameters ---" << '\n';
     std::cout << "Path Length: " << std::setprecision(1)
-              << results.pathLength_km << " km" << std::endl;
+              << results.pathLength_km << " km" << '\n';
     std::cout << "Propagation Delay: " << std::setprecision(3)
-              << results.propagationDelay_ms << " ms" << std::endl;
+              << results.propagationDelay_ms << " ms" << '\n';
 
-    std::cout << "\n--- POLARIZATION LOSS ---" << std::endl;
+    std::cout << "\n--- POLARIZATION LOSS ---" << '\n';
     std::cout << "PLF (Polarization Loss Factor): " << std::setprecision(6)
-              << results.PLF << std::endl;
+              << results.PLF << '\n';
     std::cout << "Loss: " << std::setprecision(3)
-              << results.polarizationLoss_dB << " dB" << std::endl;
+              << results.polarizationLoss_dB << " dB" << '\n';
     std::cout << "Efficiency: " << std::setprecision(2)
-              << results.polarizationEfficiency << " %" << std::endl;
+              << results.polarizationEfficiency << " %" << '\n';
 
-    std::cout << "\n--- Interpretation ---" << std::endl;
+    std::cout << "\n--- Interpretation ---" << '\n';
     if (results.polarizationLoss_dB > -1.0) {
-        std::cout << "Excellent: Minimal polarization loss." << std::endl;
+        std::cout << "Excellent: Minimal polarization loss." << '\n';
     } else if (results.polarizationLoss_dB > -3.0) {
-        std::cout << "Good: Acceptable polarization loss for most operations." << std::endl;
+        std::cout << "Good: Acceptable polarization loss for most operations." << '\n';
     } else if (results.polarizationLoss_dB > -6.0) {
-        std::cout << "Fair: Moderate loss, may affect weak signal work." << std::endl;
+        std::cout << "Fair: Moderate loss, may affect weak signal work." << '\n';
     } else {
-        std::cout << "Poor: Significant loss. Consider using circular polarization." << std::endl;
+        std::cout << "Poor: Significant loss. Consider using circular polarization." << '\n';
     }
 
     printSeparator();
@@ -498,9 +498,9 @@ int main() {
             outfile << "Polarization Loss: " << results.polarizationLoss_dB << " dB\n";
             outfile << "Efficiency: " << results.polarizationEfficiency << " %\n";
             outfile.close();
-            std::cout << "Results saved to " << filename << std::endl;
+            std::cout << "Results saved to " << filename << '\n';
         } else {
-            std::cerr << "Error: Could not open file for writing." << std::endl;
+            std::cerr << "Error: Could not open file for writing." << '\n';
         }
     }
 

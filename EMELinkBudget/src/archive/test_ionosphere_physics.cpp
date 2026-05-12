@@ -1,12 +1,8 @@
-#define _USE_MATH_DEFINES
 #include "IonospherePhysics.h"
+#include "MathConstants.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 int main() {
     std::cout << "Ionosphere Physics Model Test\n";
@@ -14,11 +10,11 @@ int main() {
 
     double elevation_deg = 30.0;
     double azimuth_deg = 180.0;
-    double elevation = elevation_deg * M_PI / 180.0;
-    double azimuth = azimuth_deg * M_PI / 180.0;
+    double elevation = eme::math::degreesToRadians(elevation_deg);
+    double azimuth = eme::math::degreesToRadians(azimuth_deg);
 
-    double stationLat = 40.7 * M_PI / 180.0;
-    double stationLon = -74.0 * M_PI / 180.0;
+    double stationLat = eme::math::degreesToRadians(40.7);
+    double stationLon = eme::math::degreesToRadians(-74.0);
 
     double hmF2 = 350.0;
 
@@ -40,8 +36,8 @@ int main() {
 
     std::cout << "Test 3: IPP Calculation\n";
     std::cout << "------------------------\n";
-    std::cout << "Station: " << (stationLat * 180.0 / M_PI) << " N, "
-              << (stationLon * 180.0 / M_PI) << " E\n";
+    std::cout << "Station: " << eme::math::radiansToDegrees(stationLat) << " N, "
+              << eme::math::radiansToDegrees(stationLon) << " E\n";
     std::cout << "Elevation: " << elevation_deg << " deg\n";
     std::cout << "Azimuth: " << azimuth_deg << " deg\n";
 
@@ -49,22 +45,22 @@ int main() {
         stationLat, stationLon, elevation, azimuth, hmF2);
 
     std::cout << "IPP Latitude: " << std::setprecision(4)
-              << (ipp.latitude * 180.0 / M_PI) << " deg\n";
-    std::cout << "IPP Longitude: " << (ipp.longitude * 180.0 / M_PI) << " deg\n";
+              << eme::math::radiansToDegrees(ipp.latitude) << " deg\n";
+    std::cout << "IPP Longitude: " << eme::math::radiansToDegrees(ipp.longitude) << " deg\n";
     std::cout << "IPP Height: " << ipp.height << " km\n\n";
 
     std::cout << "Test 4: Magnetic Field Projection\n";
     std::cout << "----------------------------------\n";
     double B_magnitude = 5e-5;
-    double B_inclination = 60.0 * M_PI / 180.0;
-    double B_declination = 5.0 * M_PI / 180.0;
+    double B_inclination = eme::math::degreesToRadians(60.0);
+    double B_declination = eme::math::degreesToRadians(5.0);
 
     double B_proj = IonospherePhysics::calculateMagneticFieldProjection(
         B_magnitude, B_inclination, B_declination, elevation, azimuth);
 
     std::cout << "B magnitude: " << (B_magnitude * 1e9) << " nT\n";
-    std::cout << "B inclination: " << (B_inclination * 180.0 / M_PI) << " deg\n";
-    std::cout << "B declination: " << (B_declination * 180.0 / M_PI) << " deg\n";
+    std::cout << "B inclination: " << eme::math::radiansToDegrees(B_inclination) << " deg\n";
+    std::cout << "B declination: " << eme::math::radiansToDegrees(B_declination) << " deg\n";
     std::cout << "B projected: " << std::scientific << std::setprecision(3)
               << B_proj << " T\n";
     std::cout << "B projected: " << std::fixed << std::setprecision(2)
@@ -83,14 +79,14 @@ int main() {
     std::cout << "hmF2: " << hmF2 << " km\n";
     std::cout << "Faraday Rotation: " << std::setprecision(3)
               << omega << " rad\n";
-    std::cout << "Faraday Rotation: " << (omega * 180.0 / M_PI) << " deg\n\n";
+    std::cout << "Faraday Rotation: " << eme::math::radiansToDegrees(omega) << " deg\n\n";
 
     std::cout << "Test 6: Elevation Angle Comparison\n";
     std::cout << "-----------------------------------\n";
     std::cout << "Elev(deg)  Mapping   1/sin(el)  Difference(%)\n";
 
     for (int el = 10; el <= 90; el += 10) {
-        double el_rad = el * M_PI / 180.0;
+        double el_rad = eme::math::degreesToRadians(static_cast<double>(el));
         double mf = IonospherePhysics::calculateMappingFunction(el_rad, hmF2);
         double simple = 1.0 / std::sin(el_rad);
         double diff = ((mf - simple) / simple) * 100.0;

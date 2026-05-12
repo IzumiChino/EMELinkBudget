@@ -42,9 +42,6 @@
     </ClCompile>
 
     <!-- Main Programs - Choose ONE -->
-    <ClCompile Include="src\main_linkbudget.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\main_linkbudget_interactive.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -92,36 +89,7 @@
       <Filter>源文件\DataProviders</Filter>
     </ClCompile>
 
-    <!-- Old Main Programs (Excluded) -->
-    <ClCompile Include="src\main.cpp">
-      <Filter>源文件\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="src\main_interactive.cpp">
-      <Filter>源文件\Tests</Filter>
-    </ClCompile>
-
-    <!-- Test Programs (Excluded) -->
-    <ClCompile Include="src\test_calendar.cpp">
-      <Filter>源文件\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="src\test_glotec.cpp">
-      <Filter>源文件\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="src\test_grid.cpp">
-      <Filter>源文件\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="src\test_ionex.cpp">
-      <Filter>源文件\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="src\test_ionosphere_physics.cpp">
-      <Filter>源文件\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="src\test_user_case.cpp">
-      <Filter>源文件\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="src\test_wmm.cpp">
-      <Filter>源文件\Tests</Filter>
-    </ClCompile>
+    <!-- Regression Test -->
     <ClCompile Include="src\test_linkbudget_quick.cpp">
       <Filter>源文件\Tests</Filter>
     </ClCompile>

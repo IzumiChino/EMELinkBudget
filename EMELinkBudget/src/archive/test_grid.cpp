@@ -5,11 +5,11 @@
 #include <vector>
 
 void printSeparator(char c = '=', int length = 75) {
-    std::cout << std::string(length, c) << std::endl;
+    std::cout << std::string(length, c) << '\n';
 }
 
 void testGridToLatLon() {
-    std::cout << "\n=== Test 1: Grid to Lat/Lon Conversion ===" << std::endl;
+    std::cout << "\n=== Test 1: Grid to Lat/Lon Conversion ===" << '\n';
 
     struct TestCase {
         std::string grid;
@@ -31,7 +31,7 @@ void testGridToLatLon() {
     std::cout << std::setw(10) << "Grid"
               << std::setw(12) << "Latitude"
               << std::setw(12) << "Longitude"
-              << "  Location" << std::endl;
+              << "  Location" << '\n';
     printSeparator('-', 75);
 
     for (const auto& test : tests) {
@@ -41,22 +41,22 @@ void testGridToLatLon() {
             std::cout << std::setw(10) << test.grid
                       << std::setw(12) << lat
                       << std::setw(12) << lon
-                      << "  " << test.location << std::endl;
+                      << "  " << test.location << '\n';
 
             double tolerance = (test.grid.length() == 4) ? 0.1 : 0.05;
             if (std::abs(lat - test.expected_lat) > tolerance ||
                 std::abs(lon - test.expected_lon) > tolerance) {
                 std::cout << "  WARNING: Expected " << test.expected_lat
-                          << ", " << test.expected_lon << std::endl;
+                          << ", " << test.expected_lon << '\n';
             }
         } catch (const std::exception& e) {
-            std::cout << "  ERROR: " << e.what() << std::endl;
+            std::cout << "  ERROR: " << e.what() << '\n';
         }
     }
 }
 
 void testLatLonToGrid() {
-    std::cout << "\n=== Test 2: Lat/Lon to Grid Conversion ===" << std::endl;
+    std::cout << "\n=== Test 2: Lat/Lon to Grid Conversion ===" << '\n';
 
     struct TestCase {
         double lat;
@@ -78,7 +78,7 @@ void testLatLonToGrid() {
               << std::setw(12) << "Longitude"
               << std::setw(12) << "Grid"
               << std::setw(12) << "Expected"
-              << "  Location" << std::endl;
+              << "  Location" << '\n';
     printSeparator('-', 75);
 
     for (const auto& test : tests) {
@@ -91,19 +91,19 @@ void testLatLonToGrid() {
                       << "  " << test.location;
 
             if (grid == test.expected_grid) {
-                std::cout << " [OK]" << std::endl;
+                std::cout << " [OK]" << '\n';
             } else {
-                std::cout << " [FAIL]" << std::endl;
+                std::cout << " [FAIL]" << '\n';
             }
         } catch (const std::exception& e) {
-            std::cout << "  ERROR: " << e.what() << std::endl;
+            std::cout << "  ERROR: " << e.what() << '\n';
         }
     }
 }
 
 void testRoundTrip() {
-    std::cout << "\n=== Test 3: Round-Trip Conversion ===" << std::endl;
-    std::cout << "Converting Grid -> Lat/Lon -> Grid should return same grid" << std::endl;
+    std::cout << "\n=== Test 3: Round-Trip Conversion ===" << '\n';
+    std::cout << "Converting Grid -> Lat/Lon -> Grid should return same grid" << '\n';
 
     std::vector<std::string> grids = {
         "FN20xa", "PM95vr", "JO01bh", "IO91wm", "OM81ks", "KO93bs"
@@ -111,7 +111,7 @@ void testRoundTrip() {
 
     std::cout << std::setw(12) << "Original"
               << std::setw(12) << "Converted"
-              << "  Status" << std::endl;
+              << "  Status" << '\n';
     printSeparator('-', 75);
 
     for (const auto& original : grids) {
@@ -123,15 +123,15 @@ void testRoundTrip() {
                   << std::setw(12) << converted;
 
         if (original == converted) {
-            std::cout << "  PASS" << std::endl;
+            std::cout << "  PASS" << '\n';
         } else {
-            std::cout << "  FAIL" << std::endl;
+            std::cout << "  FAIL" << '\n';
         }
     }
 }
 
 void testDistance() {
-    std::cout << "\n=== Test 4: Distance Calculation ===" << std::endl;
+    std::cout << "\n=== Test 4: Distance Calculation ===" << '\n';
 
     struct TestCase {
         std::string grid1;
@@ -152,7 +152,7 @@ void testDistance() {
               << std::setw(10) << "Grid 2"
               << std::setw(15) << "Distance (km)"
               << std::setw(15) << "Expected (km)"
-              << "  Description" << std::endl;
+              << "  Description" << '\n';
     printSeparator('-', 75);
 
     for (const auto& test : tests) {
@@ -165,15 +165,15 @@ void testDistance() {
 
         double error = std::abs(distance - test.expected_km) / (test.expected_km + 0.001) * 100.0;
         if (error < 1.0 || test.expected_km == 0) {
-            std::cout << " [OK]" << std::endl;
+            std::cout << " [OK]" << '\n';
         } else {
-            std::cout << " [FAIL: " << error << "%]" << std::endl;
+            std::cout << " [FAIL: " << error << "%]" << '\n';
         }
     }
 }
 
 void interactiveTest() {
-    std::cout << "\n=== Interactive Test ===" << std::endl;
+    std::cout << "\n=== Interactive Test ===" << '\n';
     std::cout << "Enter a Maidenhead Grid locator to test: ";
     std::string grid;
     std::cin >> grid;
@@ -182,34 +182,34 @@ void interactiveTest() {
         double lat, lon;
         MaidenheadGrid::gridToLatLon(grid, lat, lon);
 
-        std::cout << "\nResults for " << grid << ":" << std::endl;
-        std::cout << "  Latitude:  " << std::fixed << std::setprecision(6) << lat << " deg" << std::endl;
-        std::cout << "  Longitude: " << lon << " deg" << std::endl;
+        std::cout << "\nResults for " << grid << ":" << '\n';
+        std::cout << "  Latitude:  " << std::fixed << std::setprecision(6) << lat << " deg" << '\n';
+        std::cout << "  Longitude: " << lon << " deg" << '\n';
 
         std::string grid_back = MaidenheadGrid::latLonToGrid(lat, lon, static_cast<int>(grid.length()));
         std::cout << "  Round-trip: " << grid_back;
         if (grid == grid_back) {
-            std::cout << " [Correct]" << std::endl;
+            std::cout << " [Correct]" << '\n';
         } else {
-            std::cout << " [Incorrect]" << std::endl;
+            std::cout << " [Incorrect]" << '\n';
         }
 
-        std::cout << "\nAlternative formats:" << std::endl;
-        std::cout << "  4-char: " << MaidenheadGrid::latLonToGrid(lat, lon, 4) << std::endl;
-        std::cout << "  6-char: " << MaidenheadGrid::latLonToGrid(lat, lon, 6) << std::endl;
+        std::cout << "\nAlternative formats:" << '\n';
+        std::cout << "  4-char: " << MaidenheadGrid::latLonToGrid(lat, lon, 4) << '\n';
+        std::cout << "  6-char: " << MaidenheadGrid::latLonToGrid(lat, lon, 6) << '\n';
 
     } catch (const std::exception& e) {
-        std::cout << "ERROR: " << e.what() << std::endl;
+        std::cout << "ERROR: " << e.what() << '\n';
     }
 }
 
 int main() {
     printSeparator();
-    std::cout << "  Maidenhead Grid Locator System - Test Suite" << std::endl;
+    std::cout << "  Maidenhead Grid Locator System - Test Suite" << '\n';
     printSeparator();
 
-    std::cout << "\nThis program tests the Maidenhead Grid conversion functions." << std::endl;
-    std::cout << "You can verify results at: https://www.levinecentral.com/ham/grid_square.php" << std::endl;
+    std::cout << "\nThis program tests the Maidenhead Grid conversion functions." << '\n';
+    std::cout << "You can verify results at: https://www.levinecentral.com/ham/grid_square.php" << '\n';
 
     testGridToLatLon();
     testLatLonToGrid();
@@ -219,7 +219,7 @@ int main() {
 
     std::cout << "\n";
     printSeparator();
-    std::cout << "Test suite complete!" << std::endl;
+    std::cout << "Test suite complete!" << '\n';
     printSeparator();
 
     std::cout << "\nPress Enter to exit...";

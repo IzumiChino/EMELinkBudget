@@ -19,6 +19,7 @@ x64/
 
 # CMake build directories and files
 build/
+build-*/
 build-cmake/
 CMakeFiles/
 CMakeCache.txt
@@ -27,6 +28,18 @@ Makefile
 *.cmake
 CTestTestfile.cmake
 DartConfiguration.tcl
+compile_commands.json
+
+# Static analysis / sanitizer output
+*-cppcheck-build-dir/
+*.cppcheck
+
+# Large unrelated media/archives that have accumulated in the repo
+*.zip
+*.pptx
+*.png
+simulation_*.csv
+simulation_*.ods
 
 # IDE and editor files
 .vscode/settings.json
@@ -51,4 +64,5 @@ DartConfiguration.tcl
 /doc/Timezone_Bug_Fix.md
 /EMELinkBudget/compile_test_wmm.bat
 test_wmm_load
+EMESimulation24h
 /EMELinkBudget/data/haslam408_dsds_Remazeilles2014_ns2048.fits
