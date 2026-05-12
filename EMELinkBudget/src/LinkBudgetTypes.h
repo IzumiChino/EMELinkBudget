@@ -199,6 +199,8 @@ double frequency_MHz;
     double rxNoiseFigure_dB;
     double physicalTemp_K;
 
+    double requiredSNR_dB;
+
     std::time_t observationTime;
 
     IonosphereData ionosphereData;
@@ -224,6 +226,7 @@ double frequency_MHz;
           rxFeedlineLoss_dB(0.5),
           rxNoiseFigure_dB(0.5),
           physicalTemp_K(290.0),
+          requiredSNR_dB(-30.2),
           observationTime(0),
           includeFaradayRotation(true),
           includeSpatialRotation(true),

@@ -1,10 +1,7 @@
 #include "PathLossCalculator.h"
+#include "MathConstants.h"
 #include <cmath>
 #include <algorithm>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 // ========== PathLossCalculator Implementation ==========
 
@@ -12,7 +9,7 @@ PathLossCalculator::PathLossCalculator() {
 }
 
 double PathLossCalculator::deg2rad(double degrees) const {
-    return degrees * M_PI / 180.0;
+    return eme::math::degreesToRadians(degrees);
 }
 
 double PathLossCalculator::calculateFreeSpaceLoss(
@@ -24,13 +21,13 @@ double PathLossCalculator::calculateFreeSpaceLoss(
 
     double wavelength_m = SPEED_OF_LIGHT_M_S / frequency_Hz;
 
-    double loss_dB = 20.0 * std::log10((4.0 * M_PI * distance_m) / wavelength_m);
+    double loss_dB = 20.0 * std::log10((4.0 * eme::math::kPi * distance_m) / wavelength_m);
 
     return loss_dB;
 }
 
 double PathLossCalculator::calculateLunarScatteringLoss(double reflectivity) {
-    double geometricArea_m2 = M_PI * (MOON_RADIUS_KM * 1000.0) * (MOON_RADIUS_KM * 1000.0);
+    double geometricArea_m2 = eme::math::kPi * (MOON_RADIUS_KM * 1000.0) * (MOON_RADIUS_KM * 1000.0);
     double sigma_m2 = reflectivity * geometricArea_m2;
 
     double moonGain_dB = 10.0 * std::log10(sigma_m2);
@@ -41,26 +38,21 @@ double PathLossCalculator::calculateLunarScatteringLoss(double reflectivity) {
 // ========== Hagfors' Law Implementation ==========
 
 double PathLossCalculator::calculateHagforsRoughnessParameter(double frequency_MHz) {
-    // Surface roughness parameter C depends on frequency and surface characteristics
-    // Empirical model based on lunar radar observations
-    // Reference: Hagfors (1964), Evans & Hagfors (1968)
-
-    // For the Moon, typical values:
-    // - Low frequencies (50-150 MHz): C ≈ 0.1 - 0.2 (smoother appearance)
-    // - Mid frequencies (400-1000 MHz): C ≈ 0.05 - 0.1
-    // - High frequencies (>2 GHz): C ≈ 0.02 - 0.05 (rougher appearance)
+    // Hagfors (1964) roughness parameter C increases with frequency because
+    // shorter wavelengths resolve finer surface structure -> appears rougher.
+    // Values below roughly follow Evans & Hagfors (1968) for the near-side Moon.
 
     double C;
     if (frequency_MHz < 150.0) {
-        C = 0.15;
+        C = 0.02;
     } else if (frequency_MHz < 500.0) {
-        C = 0.10;
-    } else if (frequency_MHz < 1500.0) {
-        C = 0.07;
-    } else if (frequency_MHz < 3000.0) {
-        C = 0.05;
-    } else {
         C = 0.03;
+    } else if (frequency_MHz < 1500.0) {
+        C = 0.05;
+    } else if (frequency_MHz < 3000.0) {
+        C = 0.08;
+    } else {
+        C = 0.12;
     }
 
     return C;
@@ -96,7 +88,7 @@ double PathLossCalculator::calculateHagforsScatteringCrossSection(
     double scatteringFunction = std::pow(denominator, -1.5);
 
     // Base radar cross-section (geometric area with average reflectivity)
-    double moonGeometricArea_m2 = M_PI * (MOON_RADIUS_KM * 1000.0) * (MOON_RADIUS_KM * 1000.0);
+    double moonGeometricArea_m2 = eme::math::kPi * (MOON_RADIUS_KM * 1000.0) * (MOON_RADIUS_KM * 1000.0);
     double baseReflectivity = 0.07;  // Average lunar reflectivity
 
     // Total RCS with Hagfors correction
@@ -106,35 +98,16 @@ double PathLossCalculator::calculateHagforsScatteringCrossSection(
 }
 
 double PathLossCalculator::calculateBistaticAngle(
-    double elevation_TX_deg,
-    double elevation_RX_deg,
-    double distance_TX_km,
-    double distance_RX_km) {
+    double /*elevation_TX_deg*/,
+    double /*elevation_RX_deg*/,
+    double /*distance_TX_km*/,
+    double /*distance_RX_km*/) {
 
-    // For EME, the bistatic angle is approximately related to the difference
-    // in elevation angles from TX and RX stations
-    //
-    // Simplified model: bistatic angle ≈ |elevation_TX - elevation_RX| / 2
-    // This is valid for small angular separations
-
-    double elevDiff_deg = std::abs(elevation_TX_deg - elevation_RX_deg);
-
-    // For more accurate calculation, consider the geometry:
-    // The bistatic angle is the angle at the moon surface between
-    // the incident and reflected rays
-
-    // Average elevation (approximation for specular point)
-    double avgElevation_deg = (elevation_TX_deg + elevation_RX_deg) / 2.0;
-
-    // Bistatic angle (simplified model)
-    // For near-specular reflection (typical EME), this is small
-    double bistaticAngle_deg = elevDiff_deg / 2.0;
-
-    // Clamp to reasonable range [0, 90 degrees]
-    if (bistaticAngle_deg < 0.0) bistaticAngle_deg = 0.0;
-    if (bistaticAngle_deg > 90.0) bistaticAngle_deg = 90.0;
-
-    return bistaticAngle_deg;
+    // True bistatic angle = angle at moon surface between TX and RX lines of sight.
+    // Bounded by 2*R_earth / d_moon ~= 1.9 deg for any terrestrial pair.
+    // At this magnitude cos^4(phi) + C*sin^2(phi) ~= 1 for all C in (0, 1),
+    // so Hagfors correction is essentially unity; treat EME as monostatic.
+    return 0.0;
 }
 
 double PathLossCalculator::calculateLunarScatteringLossHagfors(
@@ -147,7 +120,7 @@ double PathLossCalculator::calculateLunarScatteringLossHagfors(
     roughnessParam = calculateHagforsRoughnessParameter(frequency_MHz);
 
     // Convert bistatic angle to radians
-    double bistaticAngle_rad = bistaticAngle_deg * M_PI / 180.0;
+    double bistaticAngle_rad = eme::math::degreesToRadians(bistaticAngle_deg);
 
     // Calculate radar cross-section using Hagfors model
     double sigma_m2 = calculateHagforsScatteringCrossSection(
@@ -282,14 +255,14 @@ double AtmosphericModel::getSlantAttenuation(
 
     double zenithAtten_dB = getZenithAttenuation(frequency_MHz);
 
-    double elevation_rad = elevation_deg * M_PI / 180.0;
+    double elevation_rad = eme::math::degreesToRadians(elevation_deg);
 
     double sinEl = std::sin(elevation_rad);
 
     if (sinEl < 0.1) {
         double h0 = 8.0;
         double Re = 6371.0;
-        double chi = M_PI / 2.0 - elevation_rad;
+        double chi = eme::math::kPi / 2.0 - elevation_rad;
         double slantFactor = std::sqrt(
             (Re / h0) * (Re / h0) * std::cos(chi) * std::cos(chi) + 2.0 * (Re / h0) + 1.0
         ) - (Re / h0) * std::cos(chi);

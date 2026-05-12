@@ -3,14 +3,16 @@
 #include <string>
 #include <ctime>
 #include <cmath>
+#include <cstdint>
+#include <numbers>
 
 // ========== System Constants ==========
 namespace SystemConstants {
-    constexpr double PI = 3.14159265358979323846;
-    constexpr double FARADAY_CONSTANT = 0.23647;
-    constexpr double EARTH_RADIUS_KM = 6371.0;
-    constexpr double IONOSPHERE_HEIGHT_KM = 350.0;
-    constexpr double SPEED_OF_LIGHT = 299792458.0;
+    inline constexpr double PI = std::numbers::pi_v<double>;
+    inline constexpr double FARADAY_CONSTANT = 0.23647;
+    inline constexpr double EARTH_RADIUS_KM = 6371.0;
+    inline constexpr double IONOSPHERE_HEIGHT_KM = 350.0;
+    inline constexpr double SPEED_OF_LIGHT = 299792458.0;
 }
 
 // ========== Site Parameters ==========
@@ -24,8 +26,9 @@ struct SiteParameters {
     std::string name;
 
     SiteParameters()
-        : latitude(0.0), longitude(0.0), psi(0.0), chi(0.0),
-          gridLocator(""), callsign(""), name("") {}
+                : latitude(0.0), longitude(0.0),
+                    gridLocator(""), psi(0.0), chi(0.0),
+                    callsign(""), name("") {}
 };
 
 // ========== Ionosphere Data ==========
@@ -91,7 +94,7 @@ struct SystemConfiguration {
     bool includeSpatialRotation;
     bool includeMoonReflection;
 
-    enum class IonosphereModel {
+    enum class IonosphereModel : std::uint8_t {
         SIMPLE,
         CHAPMAN,
         IRI,
@@ -99,7 +102,7 @@ struct SystemConfiguration {
     };
     IonosphereModel ionoModel;
 
-    enum class MagneticFieldModel {
+    enum class MagneticFieldModel : std::uint8_t {
         DIPOLE,
         IGRF,
         WMM,

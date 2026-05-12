@@ -1,14 +1,10 @@
-#define _USE_MATH_DEFINES
 #include "WMMModel.h"
+#include "MathConstants.h"
 #include <fstream>
 #include <sstream>
 #include <cmath>
 #include <algorithm>
 #include <vector>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 WMMModel::WMMModel() : m_loaded(false) {
 }
@@ -65,7 +61,7 @@ void WMMModel::timeEvolveCoefficients(double decimal_year,
 void WMMModel::geodeticToGeocentric(double lat_deg, double height_km,
                                     double& lat_geocentric_deg,
                                     double& radius_km) const {
-    double lat_rad = lat_deg * M_PI / 180.0;
+    double lat_rad = eme::math::degreesToRadians(lat_deg);
     double sin_lat = std::sin(lat_rad);
     double cos_lat = std::cos(lat_rad);
 
@@ -78,7 +74,7 @@ void WMMModel::geodeticToGeocentric(double lat_deg, double height_km,
     double z = (N * (1.0 - e2) + height_km) * sin_lat;
 
     radius_km = std::sqrt(x * x + z * z);
-    lat_geocentric_deg = std::atan2(z, x) * 180.0 / M_PI;
+    lat_geocentric_deg = eme::math::radiansToDegrees(std::atan2(z, x));
 }
 
 void WMMModel::computeLegendrePolynomials(double theta,
@@ -129,9 +125,6 @@ void WMMModel::computeLegendrePolynomials(double theta,
             if (n == m) {
                 P[n][n] = sin_theta * P[n-1][n-1];
                 dP[n][n] = sin_theta * dP[n-1][n-1] + cos_theta * P[n-1][n-1];
-            } else if (n == 1) {
-                P[n][m] = cos_theta * P[n-1][m];
-                dP[n][m] = cos_theta * dP[n-1][m] - sin_theta * P[n-1][m];
             } else if (m == n - 1) {
                 P[n][m] = cos_theta * P[n-1][m];
                 dP[n][m] = cos_theta * dP[n-1][m] - sin_theta * P[n-1][m];
@@ -220,7 +213,7 @@ void WMMModel::computeMagneticField(double r, double theta, double phi,
 void WMMModel::rotateToGeodetic(double X_prime, double Z_prime,
                                 double lat_geodetic, double lat_geocentric,
                                 double& X, double& Z) const {
-    double psi = (lat_geodetic - lat_geocentric) * M_PI / 180.0;
+    double psi = eme::math::degreesToRadians(lat_geodetic - lat_geocentric);
 
     double cos_psi = std::cos(psi);
     double sin_psi = std::sin(psi);
@@ -251,8 +244,8 @@ MagneticFieldResult WMMModel::calculate(
     double lat_geocentric, radius_km;
     geodeticToGeocentric(latitude_deg, height_km, lat_geocentric, radius_km);
 
-    double theta = (90.0 - lat_geocentric) * M_PI / 180.0;
-    double phi = longitude_deg * M_PI / 180.0;
+    double theta = eme::math::degreesToRadians(90.0 - lat_geocentric);
+    double phi = eme::math::degreesToRadians(longitude_deg);
 
     double Br, Btheta, Bphi;
     computeMagneticField(radius_km, theta, phi, g, h, Br, Btheta, Bphi);
@@ -269,8 +262,8 @@ MagneticFieldResult WMMModel::calculate(
     result.Z = Z;
     result.H = std::sqrt(X * X + Y_gc * Y_gc);
     result.F = std::sqrt(X * X + Y_gc * Y_gc + Z * Z);
-    result.inclination = std::atan2(Z, result.H) * 180.0 / M_PI;
-    result.declination = std::atan2(Y_gc, X) * 180.0 / M_PI;
+    result.inclination = eme::math::radiansToDegrees(std::atan2(Z, result.H));
+    result.declination = eme::math::radiansToDegrees(std::atan2(Y_gc, X));
 
     return result;
 }

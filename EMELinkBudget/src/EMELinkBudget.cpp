@@ -102,7 +102,7 @@ SNRResults EMELinkBudget::calculateSNR(
         pathLoss,
         polarization,
         noise,
-        -30.2,
+        m_params.requiredSNR_dB,
         fadingMargin);
 }
 

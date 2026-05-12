@@ -45,7 +45,6 @@ public:
 private:
     static constexpr double SPEED_OF_LIGHT_M_S = 299792458.0;
     static constexpr double MOON_RADIUS_KM = 1737.1;
-    static constexpr double PI = 3.14159265358979323846;
 
     double deg2rad(double degrees) const;
 
