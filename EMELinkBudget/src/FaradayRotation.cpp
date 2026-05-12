@@ -1,4 +1,5 @@
 #include "FaradayRotation.h"
+#include "DebugUtils.h"
 #include <cmath>
 #include <stdexcept>
 #include <sstream>
@@ -395,14 +396,16 @@ CalculationResults FaradayRotation::calculate() {
         double Phi_up = nu_DX + faradayRotation_DX;
         double Phi_down = nu_Home + faradayRotation_Home;
 
-        std::cout << "\n[DEBUG] Polarization Calculation Details:\n";
-        std::cout << "  TX psi: " << rad2deg(m_dxSite.psi) << " deg, chi: " << rad2deg(m_dxSite.chi) << " deg\n";
-        std::cout << "  RX psi: " << rad2deg(m_homeSite.psi) << " deg, chi: " << rad2deg(m_homeSite.chi) << " deg\n";
-        std::cout << "  Parallactic angle TX: " << rad2deg(nu_DX) << " deg\n";
-        std::cout << "  Parallactic angle RX: " << rad2deg(nu_Home) << " deg\n";
-        std::cout << "  Phi_up (TX rotation): " << rad2deg(Phi_up) << " deg\n";
-        std::cout << "  Phi_down (RX rotation): " << rad2deg(Phi_down) << " deg\n";
-        std::cout << "  Total rotation: " << rad2deg(totalRotation) << " deg\n";
+        if (eme::debug::isEnabled()) {
+            std::cout << "\n[DEBUG] Polarization Calculation Details:\n";
+            std::cout << "  TX psi: " << rad2deg(m_dxSite.psi) << " deg, chi: " << rad2deg(m_dxSite.chi) << " deg\n";
+            std::cout << "  RX psi: " << rad2deg(m_homeSite.psi) << " deg, chi: " << rad2deg(m_homeSite.chi) << " deg\n";
+            std::cout << "  Parallactic angle TX: " << rad2deg(nu_DX) << " deg\n";
+            std::cout << "  Parallactic angle RX: " << rad2deg(nu_Home) << " deg\n";
+            std::cout << "  Phi_up (TX rotation): " << rad2deg(Phi_up) << " deg\n";
+            std::cout << "  Phi_down (RX rotation): " << rad2deg(Phi_down) << " deg\n";
+            std::cout << "  Total rotation: " << rad2deg(totalRotation) << " deg\n";
+        }
 
         Matrix2x2 R_up = createRotationMatrix(Phi_up);
         Matrix2x2 M_moon = m_config.includeMoonReflection ?
@@ -417,11 +420,13 @@ CalculationResults FaradayRotation::calculate() {
         std::complex<double> innerProduct = vectorDotProduct(J_RX, E_final);
         double PLF = std::norm(innerProduct);
 
-        std::cout << "  J_TX: [" << J_TX[0] << ", " << J_TX[1] << "]\n";
-        std::cout << "  J_RX: [" << J_RX[0] << ", " << J_RX[1] << "]\n";
-        std::cout << "  E_final: [" << E_final[0] << ", " << E_final[1] << "]\n";
-        std::cout << "  Inner product: " << innerProduct << "\n";
-        std::cout << "  PLF: " << PLF << "\n\n";
+        if (eme::debug::isEnabled()) {
+            std::cout << "  J_TX: [" << J_TX[0] << ", " << J_TX[1] << "]\n";
+            std::cout << "  J_RX: [" << J_RX[0] << ", " << J_RX[1] << "]\n";
+            std::cout << "  E_final: [" << E_final[0] << ", " << E_final[1] << "]\n";
+            std::cout << "  Inner product: " << innerProduct << "\n";
+            std::cout << "  PLF: " << PLF << "\n\n";
+        }
 
         m_lastResults.PLF = PLF;
         m_lastResults.polarizationLoss_dB = -10.0 * std::log10(PLF);

@@ -1,10 +1,8 @@
 #include "NoiseCalculator.h"
+#include "MathConstants.h"
 #include <cmath>
 #include <algorithm>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include <numbers>
 
 // ========== NoiseCalculator Implementation ==========
 
@@ -38,24 +36,31 @@ double NoiseCalculator::calculateGroundSpilloverTemp(
         return physicalTemp_K * 0.02;
     }
 
+    constexpr double kHalfPi = std::numbers::pi_v<double> * 0.5;
+
     double spilloverFraction = 0.0;
-    int numSamples = 36;
-    double angleStep = beamwidth_deg * 3.0 / numSamples;
+    double totalWeight = 0.0;
+    int numSamples = 72;
+    double angleMax_deg = beamwidth_deg * 3.0;
+    double angleStep = angleMax_deg / numSamples;
 
     for (int i = 0; i < numSamples; ++i) {
-        double theta = i * angleStep;
-        double patternValue = std::pow(std::cos(theta * M_PI / 180.0 / beamwidth_deg * 1.5), 2.0);
+        double theta_deg = (i + 0.5) * angleStep;
+        double patternValue = std::pow(std::cos(kHalfPi * theta_deg / beamwidth_deg), 2.0);
 
         if (patternValue < 0.01) patternValue = 0.01;
 
-        double pointingAngle = elevation_deg - theta;
+        double sinTheta = std::sin(theta_deg * eme::math::kDegreesToRadians);
+        double weight = patternValue * sinTheta * angleStep;
+        totalWeight += weight;
 
+        double pointingAngle = elevation_deg - theta_deg;
         if (pointingAngle < 0) {
-            spilloverFraction += patternValue * angleStep;
+            spilloverFraction += weight;
         }
     }
 
-    double normalizedSpillover = spilloverFraction / (beamwidth_deg * 3.0);
+    double normalizedSpillover = (totalWeight > 0.0) ? (spilloverFraction / totalWeight) : 0.0;
 
     return physicalTemp_K * normalizedSpillover;
 }
@@ -153,13 +158,20 @@ SkyNoiseModel::~SkyNoiseModel() {
 
 double SkyNoiseModel::estimateGalacticLatitude(double ra_deg, double dec_deg) {
 
-double galacticLat_approx = std::abs(dec_deg);
+    constexpr double kRaNGP_deg = 192.85948;
+    constexpr double kDecNGP_deg = 27.12825;
 
-if (ra_deg > 240.0 && ra_deg < 300.0) {
-        galacticLat_approx *= 0.5;
-    }
+    double ra_rad = ra_deg * eme::math::kDegreesToRadians;
+    double dec_rad = dec_deg * eme::math::kDegreesToRadians;
+    double raNGP_rad = kRaNGP_deg * eme::math::kDegreesToRadians;
+    double decNGP_rad = kDecNGP_deg * eme::math::kDegreesToRadians;
 
-    return galacticLat_approx;
+    double sinB = std::sin(dec_rad) * std::sin(decNGP_rad) +
+                  std::cos(dec_rad) * std::cos(decNGP_rad) * std::cos(ra_rad - raNGP_rad);
+    sinB = std::max(-1.0, std::min(1.0, sinB));
+
+    double b_rad = std::asin(sinB);
+    return std::abs(b_rad * eme::math::kRadiansToDegrees);
 }
 
 double SkyNoiseModel::calculateSkyTemp_Simplified(

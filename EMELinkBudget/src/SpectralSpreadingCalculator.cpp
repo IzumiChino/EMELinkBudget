@@ -1,5 +1,13 @@
 #include "SpectralSpreadingCalculator.h"
+#include "MathConstants.h"
 #include <cmath>
+
+namespace {
+
+constexpr double kDegreesToRadians = eme::math::kDegreesToRadians;
+constexpr double kRadiansToDegrees = eme::math::kRadiansToDegrees;
+
+}
 
 SpectralSpreadingCalculator::SpreadingResult
 SpectralSpreadingCalculator::calculateSpectralSpreading(
@@ -7,15 +15,15 @@ SpectralSpreadingCalculator::calculateSpectralSpreading(
     double moonDistance_km,
     double librationLonRate_deg_day,
     double librationLatRate_deg_day,
-    double rangeRate_km_s) {
+    double /*rangeRate_km_s*/) {
 
     SpreadingResult result;
 
     double moonAngularRadius_rad = std::atan2(MOON_RADIUS_KM, moonDistance_km);
-    result.moonAngularRadius_deg = moonAngularRadius_rad * 180.0 / M_PI;
+    result.moonAngularRadius_deg = moonAngularRadius_rad * kRadiansToDegrees;
 
-    double librationLonRate_rad_s = librationLonRate_deg_day * M_PI / 180.0 / 86400.0;
-    double librationLatRate_rad_s = librationLatRate_deg_day * M_PI / 180.0 / 86400.0;
+    double librationLonRate_rad_s = librationLonRate_deg_day * kDegreesToRadians / 86400.0;
+    double librationLatRate_rad_s = librationLatRate_deg_day * kDegreesToRadians / 86400.0;
 
     double librationRate_rad_s = std::sqrt(
         librationLonRate_rad_s * librationLonRate_rad_s +
@@ -27,11 +35,7 @@ SpectralSpreadingCalculator::calculateSpectralSpreading(
     double frequency_Hz = frequency_MHz * 1e6;
     double wavelength_m = SPEED_OF_LIGHT_M_S / frequency_Hz;
 
-    double maxDopplerFromLibration_Hz = 2.0 * result.librationVelocity_m_s / wavelength_m;
-
-    double geometricSpread_Hz = maxDopplerFromLibration_Hz * std::sin(moonAngularRadius_rad);
-
-    result.dopplerSpread_Hz = geometricSpread_Hz;
+    result.dopplerSpread_Hz = 2.0 * result.librationVelocity_m_s / wavelength_m;
 
     if (result.dopplerSpread_Hz > 0.01) {
         result.coherentIntegrationLimit_s = 1.0 / (2.0 * result.dopplerSpread_Hz);
