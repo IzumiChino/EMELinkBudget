@@ -1,9 +1,6 @@
 #include "GeometryCalculator.h"
+#include "MathConstants.h"
 #include <cmath>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 // ========== GeometryCalculator Implementation ==========
 
@@ -11,22 +8,22 @@ GeometryCalculator::GeometryCalculator() {
 }
 
 double GeometryCalculator::deg2rad(double degrees) const {
-    return degrees * M_PI / 180.0;
+    return eme::math::degreesToRadians(degrees);
 }
 
 double GeometryCalculator::rad2deg(double radians) const {
-    return radians * 180.0 / M_PI;
+    return eme::math::radiansToDegrees(radians);
 }
 
 double GeometryCalculator::normalizeAngle(double angle) const {
-    while (angle > M_PI) angle -= 2.0 * M_PI;
-    while (angle < -M_PI) angle += 2.0 * M_PI;
+    while (angle > eme::math::kPi) angle -= eme::math::kTwoPi;
+    while (angle < -eme::math::kPi) angle += eme::math::kTwoPi;
     return angle;
 }
 
 void GeometryCalculator::calculateMoonPosition(
-    double latitude, double longitude,
-    double moonRA, double moonDEC,
+    double latitude, double /*longitude*/,
+    double /*moonRA*/, double moonDEC,
     double hourAngle,
     double& azimuth, double& elevation) {
 
@@ -40,16 +37,19 @@ void GeometryCalculator::calculateMoonPosition(
     elevation = std::asin(sinLat * sinDec + cosLat * cosDec * cosH);
 
     double tanDec = std::tan(moonDEC);
-    azimuth = std::atan2(sinH, cosH * sinLat - tanDec * cosLat);
+    azimuth = std::atan2(sinH, cosH * sinLat - tanDec * cosLat) + eme::math::kPi;
 
     if (azimuth < 0) {
-        azimuth += 2.0 * M_PI;
+        azimuth += eme::math::kTwoPi;
+    }
+    if (azimuth >= eme::math::kTwoPi) {
+        azimuth -= eme::math::kTwoPi;
     }
 }
 
 double GeometryCalculator::calculateDistance(
-    double stationLat, double stationLon,
-    double moonRA, double moonDEC,
+    double /*stationLat*/, double /*stationLon*/,
+    double /*moonRA*/, double /*moonDEC*/,
     double moonDistance_km) {
 
     return moonDistance_km;
@@ -145,7 +145,15 @@ GeometryResults GeometryCalculator::calculate(
 
     results.totalPathLength_km = results.distance_TX_km + results.distance_RX_km;
 
-    results.dopplerShift_Hz = 0.0;
+    if (moonEphem.rangeRate_km_s != 0.0) {
+        DopplerCalculator dop;
+        results.dopplerShift_Hz = dop.calculateDopplerShift(
+            frequency_MHz,
+            moonEphem.rangeRate_km_s,
+            moonEphem.rangeRate_km_s);
+    } else {
+        results.dopplerShift_Hz = 0.0;
+    }
 
     if (moonEphem.librationLonRate_deg_day != 0.0 || moonEphem.librationLatRate_deg_day != 0.0) {
         auto spreading = SpectralSpreadingCalculator::calculateSpectralSpreading(
@@ -185,10 +193,10 @@ double DopplerCalculator::calculateDopplerShift(
 }
 
 double DopplerCalculator::estimateRadialVelocity(
-    const SiteParameters& site,
-    const MoonEphemeris& moonEphem,
-    std::time_t observationTime,
-    double deltaTime_s) {
+    const SiteParameters& /*site*/,
+    const MoonEphemeris& /*moonEphem*/,
+    std::time_t /*observationTime*/,
+    double /*deltaTime_s*/) {
 
     // Simplified radial velocity estimation
     // For accurate calculation, need moon position at t and t+Δt

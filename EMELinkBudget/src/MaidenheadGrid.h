@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <cctype>
 #include <cmath>
+#include <numbers>
 
 // ========== Maidenhead Grid Locator Converter ==========
 class MaidenheadGrid {
@@ -15,7 +16,7 @@ public:
 
         std::string gridUpper = grid;
         for (char& c : gridUpper) {
-            c = std::toupper(c);
+            c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
         }
 
         if (!std::isalpha(gridUpper[0]) || !std::isalpha(gridUpper[1]) ||
@@ -36,8 +37,8 @@ public:
                 throw std::invalid_argument("Invalid subsquare format");
             }
 
-            char subsq_lon = std::tolower(grid[4]);
-            char subsq_lat = std::tolower(grid[5]);
+            char subsq_lon = static_cast<char>(std::tolower(static_cast<unsigned char>(grid[4])));
+            char subsq_lat = static_cast<char>(std::tolower(static_cast<unsigned char>(grid[5])));
 
             if (subsq_lon < 'a' || subsq_lon > 'x' || subsq_lat < 'a' || subsq_lat > 'x') {
                 throw std::invalid_argument("Subsquare must be a-x");
@@ -99,13 +100,13 @@ public:
     }
 
     static double calculateDistanceLatLon(double lat1, double lon1, double lat2, double lon2) {
-        const double R = 6371.0;
-        const double PI = 3.14159265358979323846;
+        constexpr double R = 6371.0;
+        constexpr double kPi = std::numbers::pi_v<double>;
 
-        lat1 = lat1 * PI / 180.0;
-        lon1 = lon1 * PI / 180.0;
-        lat2 = lat2 * PI / 180.0;
-        lon2 = lon2 * PI / 180.0;
+        lat1 = lat1 * kPi / 180.0;
+        lon1 = lon1 * kPi / 180.0;
+        lat2 = lat2 * kPi / 180.0;
+        lon2 = lon2 * kPi / 180.0;
 
         double dlat = lat2 - lat1;
         double dlon = lon2 - lon1;
