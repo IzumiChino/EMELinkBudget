@@ -1,23 +1,19 @@
-#define _USE_MATH_DEFINES
 #define _CRT_SECURE_NO_WARNINGS
 #include "MoonCalendarReader.h"
 #include <fstream>
 #include <sstream>
 #include <cmath>
 #include <algorithm>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include <ctime>
 
 // ========== Constructor ==========
 
-MoonCalendarReader::MoonCalendarReader() : m_loaded(false) {
+MoonCalendarReader::MoonCalendarReader() : m_loaded(false), m_year(0) {
 }
 
 // ========== Load Calendar File ==========
 
-bool MoonCalendarReader::loadCalendarFile(const std::string& filename) {
+bool MoonCalendarReader::loadCalendarFile(const std::string& filename, int year) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         return false;
@@ -25,6 +21,18 @@ bool MoonCalendarReader::loadCalendarFile(const std::string& filename) {
 
     m_entries.clear();
     std::string line;
+
+    if (year <= 0) {
+        std::time_t now = std::time(nullptr);
+        std::tm utc{};
+#ifdef _WIN32
+        gmtime_s(&utc, &now);
+#else
+        gmtime_r(&now, &utc);
+#endif
+        year = utc.tm_year + 1900;
+    }
+    m_year = year;
 
     std::getline(file, line);
 
@@ -38,7 +46,7 @@ bool MoonCalendarReader::loadCalendarFile(const std::string& filename) {
         if (iss >> dateStr >> entry.declination >> entry.pathloss >> entry.sunOffset >> entry.noise) {
             int month, day;
             if (sscanf(dateStr.c_str(), "%d-%d", &month, &day) == 2) {
-                entry.date.tm_year = 2026 - 1900;
+                entry.date.tm_year = m_year - 1900;
                 entry.date.tm_mon = month - 1;
                 entry.date.tm_mday = day;
                 entry.date.tm_hour = 0;

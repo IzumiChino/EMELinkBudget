@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "NOAAGlotecReader.h"
+#include "DebugUtils.h"
 #include "SimpleHttpClient.h"
 #include <sstream>
 #include <iomanip>
@@ -78,28 +79,35 @@ bool NOAAGlotecReader::parseGeoJson(const std::string& jsonContent, GlotecData& 
     data.tecValues.clear();
     data.isValid = false;
 
-    std::regex coordRegex(R"("coordinates"\s*:\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\])");
-    std::regex tecRegex(R"("tec"\s*:\s*(-?\d+\.?\d*))");
+    static const std::regex coordRegex(R"("coordinates"\s*:\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\])");
+    static const std::regex tecRegex(R"("tec"\s*:\s*(-?\d+\.?\d*))");
 
     auto coordBegin = std::sregex_iterator(jsonContent.begin(), jsonContent.end(), coordRegex);
-    auto coordEnd = std::sregex_iterator();
+    const auto coordEnd = std::sregex_iterator();
     auto tecBegin = std::sregex_iterator(jsonContent.begin(), jsonContent.end(), tecRegex);
 
     std::vector<double> lons, lats;
     std::vector<float> tecs;
 
-    for (auto it = coordBegin; it != coordEnd; ++it) {
-        std::smatch match = *it;
-        double lon = std::stod(match[1].str());
-        double lat = std::stod(match[2].str());
-        lons.push_back(lon);
-        lats.push_back(lat);
-    }
+    try {
+        for (auto it = coordBegin; it != coordEnd; ++it) {
+            std::smatch match = *it;
+            double lon = std::stod(match[1].str());
+            double lat = std::stod(match[2].str());
+            lons.push_back(lon);
+            lats.push_back(lat);
+        }
 
-    for (auto it = tecBegin; it != std::sregex_iterator(); ++it) {
-        std::smatch match = *it;
-        float tec = std::stof(match[1].str());
-        tecs.push_back(tec);
+        for (auto it = tecBegin; it != std::sregex_iterator(); ++it) {
+            std::smatch match = *it;
+            float tec = std::stof(match[1].str());
+            tecs.push_back(tec);
+        }
+    } catch (const std::exception& ex) {
+        if (eme::debug::isEnabled()) {
+            std::cout << "[DEBUG] Failed to parse NOAA numeric fields: " << ex.what() << '\n';
+        }
+        return false;
     }
 
     if (lons.size() != tecs.size() || lons.empty()) {
@@ -107,7 +115,6 @@ bool NOAAGlotecReader::parseGeoJson(const std::string& jsonContent, GlotecData& 
     }
 
     double minLat = *std::min_element(lats.begin(), lats.end());
-    double maxLat = *std::max_element(lats.begin(), lats.end());
     double minLon = *std::min_element(lons.begin(), lons.end());
 
     data.latStart = minLat;
@@ -122,12 +129,20 @@ bool NOAAGlotecReader::parseGeoJson(const std::string& jsonContent, GlotecData& 
         data.numLat = static_cast<int>(uniqueLats.size());
     }
 
-    data.numLon = 72;
-    data.lonStep = 5.0;
+    std::vector<double> uniqueLons = lons;
+    std::sort(uniqueLons.begin(), uniqueLons.end());
+    uniqueLons.erase(std::unique(uniqueLons.begin(), uniqueLons.end()), uniqueLons.end());
+
+    if (uniqueLons.size() > 1) {
+        data.lonStep = uniqueLons[1] - uniqueLons[0];
+        data.numLon = static_cast<int>(uniqueLons.size());
+    } else {
+        return false;
+    }
 
     data.tecValues.resize(data.numLon * data.numLat, 0.0f);
 
-    for (size_t i = 0; i < lons.size(); ++i) {
+    for (std::size_t i = 0; i < lons.size(); ++i) {
         int col = static_cast<int>(std::round((lons[i] - data.lonStart) / data.lonStep));
         int row = static_cast<int>(std::round((lats[i] - data.latStart) / data.latStep));
 
@@ -200,17 +215,25 @@ bool NOAAGlotecReader::fetchTecData(const std::tm& requestTime, GlotecData& data
     std::string errorMsg;
 
     if (!SimpleHttpClient::fetchUrlWithStatus(url, jsonContent, statusCode, errorMsg)) {
-        std::cout << "[DEBUG] First attempt failed: " << errorMsg << std::endl;
+        if (eme::debug::isEnabled()) {
+            std::cout << "[DEBUG] First attempt failed: " << errorMsg << '\n';
+        }
 
         std::tm roundedTime = roundToNearest5Minutes(requestTime, false);
         url = getDataUrl(roundedTime);
-        std::cout << "[DEBUG] Trying alternate URL: " << url << std::endl;
+        if (eme::debug::isEnabled()) {
+            std::cout << "[DEBUG] Trying alternate URL: " << url << '\n';
+        }
 
         if (!SimpleHttpClient::fetchUrlWithStatus(url, jsonContent, statusCode, errorMsg)) {
-            std::cout << "[DEBUG] Second attempt failed: " << errorMsg << std::endl;
+            if (eme::debug::isEnabled()) {
+                std::cout << "[DEBUG] Second attempt failed: " << errorMsg << '\n';
+            }
 
             if (statusCode == 404) {
-                std::cout << "[DEBUG] Data not available yet (404), trying recent historical data..." << std::endl;
+                if (eme::debug::isEnabled()) {
+                    std::cout << "[DEBUG] Data not available yet (404), trying recent historical data...\n";
+                }
 
                 for (int minutesBack = 10; minutesBack <= 30; minutesBack += 10) {
                     std::tm historicalTime = requestTime;
@@ -228,34 +251,44 @@ bool NOAAGlotecReader::fetchTecData(const std::tm& requestTime, GlotecData& data
                     std::tm roundedHistorical = roundToNearest5Minutes(historicalTime, true);
                     url = getDataUrl(roundedHistorical);
 
-                    std::cout << "[DEBUG] Trying " << minutesBack << " minute(s) back: " << url << std::endl;
+                    if (eme::debug::isEnabled()) {
+                        std::cout << "[DEBUG] Trying " << minutesBack << " minute(s) back: " << url << '\n';
+                    }
 
                     if (SimpleHttpClient::fetchUrlWithStatus(url, jsonContent, statusCode, errorMsg)) {
-                        std::cout << "[DEBUG] Found data from " << minutesBack << " minute(s) ago" << std::endl;
+                        if (eme::debug::isEnabled()) {
+                            std::cout << "[DEBUG] Found data from " << minutesBack << " minute(s) ago\n";
+                        }
                         data.timestamp = roundedHistorical;
                         bool parseSuccess = parseGeoJson(jsonContent, data);
                         if (parseSuccess) {
-                            std::cout << "[!] Using data from " << minutesBack << " minute(s) ago (NOAA data has ~10-30 min delay)" << std::endl;
+                            std::cout << "[!] Using data from " << minutesBack << " minute(s) ago (NOAA data has ~10-30 min delay)\n";
                         }
                         return parseSuccess;
                     }
                 }
 
-                std::cout << "[DEBUG] No data found in past 30 minutes" << std::endl;
+                if (eme::debug::isEnabled()) {
+                    std::cout << "[DEBUG] No data found in past 30 minutes\n";
+                }
             }
 
             return false;
         }
     }
 
-    std::cout << "[DEBUG] HTTP 200 OK, response size: " << jsonContent.length() << " bytes" << std::endl;
+    if (eme::debug::isEnabled()) {
+        std::cout << "[DEBUG] HTTP 200 OK, response size: " << jsonContent.length() << " bytes\n";
+    }
 
     data.timestamp = roundToNearest5Minutes(requestTime, true);
     bool parseSuccess = parseGeoJson(jsonContent, data);
 
     if (!parseSuccess) {
-        std::cout << "[DEBUG] GeoJSON parsing failed" << std::endl;
-        std::cout << "[DEBUG] First 200 chars: " << jsonContent.substr(0, 200) << std::endl;
+        if (eme::debug::isEnabled()) {
+            std::cout << "[DEBUG] GeoJSON parsing failed\n";
+            std::cout << "[DEBUG] First 200 chars: " << jsonContent.substr(0, 200) << '\n';
+        }
     }
 
     return parseSuccess;
